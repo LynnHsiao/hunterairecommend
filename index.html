@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 分案自動指派成熟度分析</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: #f8f8f6;
+  color: #1a1a1a;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.dash { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+/* Header */
+.header-card {
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 20px;
+  padding: 2rem 2.25rem;
+  margin-bottom: 1.5rem;
+}
+.badge {
+  display: inline-block;
+  background: #1a1a1a;
+  color: #f5f5f5;
+  font-size: 12px;
+  padding: 4px 14px;
+  border-radius: 99px;
+  margin-bottom: 1.1rem;
+  letter-spacing: 0.02em;
+}
+.header-inner { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+.header-text { flex: 2; min-width: 240px; }
+.header-text h1 { font-size: 26px; font-weight: 600; color: #111; line-height: 1.35; margin-bottom: 0.8rem; }
+.header-text p { font-size: 14px; color: #666; line-height: 1.75; }
+.header-summary {
+  flex: 1; min-width: 230px;
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+}
+.hs-label { font-size: 12px; color: #999; margin-bottom: 0.6rem; }
+.hs-body { font-size: 15px; font-weight: 500; color: #f0f0f0; line-height: 1.65; }
+
+/* Metric grid */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.metric-card { background: #f0efea; border-radius: 12px; padding: 1.1rem 1.3rem; }
+.metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.metric-value { font-size: 28px; font-weight: 600; color: #111; margin-bottom: 6px; }
+.metric-desc { font-size: 12px; color: #888; line-height: 1.55; }
+
+/* Section grid */
+.section-grid { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+.two-col { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.equal-col { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+@media (max-width: 700px) {
+  .two-col, .equal-col { grid-template-columns: 1fr; }
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 16px;
+  padding: 1.3rem 1.6rem;
+}
+.card-title { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 4px; }
+.card-desc { font-size: 12px; color: #888; margin-bottom: 1rem; line-height: 1.55; }
+.chart-wrap { position: relative; width: 100%; }
+
+/* Insights */
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.insight-card {
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 12px;
+}
+.insight-icon {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: #f0efea;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: #555;
+}
+.insight-title { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 8px; }
+.insight-body { font-size: 13px; color: #666; line-height: 1.65; }
+
+/* Progress bars */
+.progress-item { margin-bottom: 1rem; }
+.progress-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #555; }
+.progress-row span:first-child { font-weight: 600; color: #111; }
+.progress-bar-bg { background: #f0efea; border-radius: 99px; height: 10px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 99px; background: #2c2c2a; }
+
+/* Layer blocks */
+.layer-block { background: #f8f8f6; border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 8px; border: 1px solid #e5e5e0; }
+.layer-title { font-size: 13px; font-weight: 600; color: #111; margin-bottom: 4px; }
+.layer-body { font-size: 12px; color: #777; line-height: 1.55; }
+.arrow-sep { text-align: center; font-size: 16px; color: #bbb; margin: 4px 0; }
+
+/* Steps */
+.step-list { display: flex; flex-direction: column; gap: 10px; }
+.step-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  border: 1px solid #e5e5e0;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #1a1a1a; color: #f5f5f5;
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-text { font-size: 13px; color: #666; line-height: 1.6; }
+
+/* Strategy */
+.strategy-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #f8f8f6;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 8px;
+}
+.check-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: #555; }
+
+/* Alerts */
+.alert-card { border-radius: 16px; padding: 1.3rem 1.6rem; }
+.alert-amber { background: #faeeda; border: 1px solid #FAC775; }
+.alert-amber .alert-title { color: #412402; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.alert-amber .alert-body { color: #633806; font-size: 13px; line-height: 1.65; }
+.alert-neutral { background: #fff; border: 1px solid #e5e5e0; }
+.alert-neutral .alert-title { color: #111; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.alert-neutral .alert-body { color: #666; font-size: 13px; line-height: 1.65; }
+
+/* Section headings */
+.section-eyebrow { font-size: 11px; font-weight: 600; color: #999; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.section-title { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 8px; }
+.section-desc { font-size: 13px; color: #777; line-height: 1.75; margin-bottom: 1.2rem; max-width: 700px; }
+
+/* Legend */
+.legend { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+.legend span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #777; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="dash">
+
+  <!-- Header -->
+  <div class="header-card">
+    <div class="badge">AI 分案自動指派成熟度分析</div>
+    <div class="header-inner">
+      <div class="header-text">
+        <h1>從「推薦輔助」走向「直接指派」</h1>
+        <p>本頁以 33 筆 decision event 為基礎，重新解讀 AI 分案模型的真實位置：它已具備一定的候選輔助能力，但距離完全取代主管決策，關鍵瓶頸仍集中在召回能力、override 規則吸收，以及不同單位的成熟度落差。</p>
+      </div>
+      <div class="header-summary">
+        <div class="hs-label">一句話結論</div>
+        <div class="hs-body">現階段 AI 更像是縮小主管搜尋範圍的工具，而不是可直接接管決策的自動分派器。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Decision Events</div>
+      <div class="metric-value">33</div>
+      <div class="metric-desc">每列代表一次 decision event，而非案件主檔。</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">AI 採用率</div>
+      <div class="metric-value">36.4%</div>
+      <div class="metric-desc">主管最後採用 AI top1~top4 的比例。</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Top1 對齊率</div>
+      <div class="metric-value">15.2%</div>
+      <div class="metric-desc">若直接讓 AI top1 指派，與主管當次選擇一致的比例。</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Manual 比例</div>
+      <div class="metric-value">63.6%</div>
+      <div class="metric-desc">主管未採用 AI top5，改為人工指派。</div>
+    </div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="section-grid two-col">
+    <div class="card">
+      <div class="card-title">Decision 分布</div>
+      <div class="card-desc">主管當次行為的整體結構：manual 仍明顯高於 AI 採用。</div>
+      <div class="chart-wrap" style="height:280px"><canvas id="decisionChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">AI 採用 vs Manual</div>
+      <div class="card-desc">event-level adoption rate = 12 / 33</div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#3266ad"></span>AI 採用 36%</span>
+        <span><span class="legend-dot" style="background:#888780"></span>Manual 64%</span>
+      </div>
+      <div class="chart-wrap" style="height:240px"><canvas id="adoptionChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="section-grid equal-col">
+    <div class="card">
+      <div class="card-title">自動指派成熟度漏斗</div>
+      <div class="card-desc">從「全部事件」看到「top5 命中」與「top1 直接等於主管選擇」的完整路徑。</div>
+      <div class="chart-wrap" style="height:280px"><canvas id="funnelChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">AI 被採用時的名次分布</div>
+      <div class="card-desc">在已採用 AI 的 12 筆事件中，top1 與 top2 幾乎同樣常見。</div>
+      <div style="margin-top:1rem">
+        <div class="progress-item">
+          <div class="progress-row"><span>top1</span><span>5 筆 · 41.7%</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:41.7%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-row"><span>top2</span><span>5 筆 · 41.7%</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:41.7%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-row"><span>top3</span><span>1 筆 · 8.3%</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:8.3%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-row"><span>top4</span><span>1 筆 · 8.3%</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:8.3%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Diagnosis -->
+  <div style="margin-bottom:1.1rem">
+    <div class="section-eyebrow">Core Diagnosis</div>
+    <div class="section-title">這份資料真正揭示的不是「採用多少」，而是「還差哪一層才能自動化」</div>
+    <div class="section-desc">若模型的最終目標是直接取代主管決策，那麼目前最值得重視的，不是單純的 adoption rate，而是模型是否先把主管會選的人找進候選池，以及不同單位的決策規則是否已被模型吸收。</div>
+  </div>
+  <div class="insight-grid">
+    <div class="insight-card">
+      <div class="insight-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="currentColor" opacity="0.4"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="currentColor" opacity="0.7"/><rect x="11" y="2" width="3" height="12" rx="1" fill="currentColor"/></svg>
+      </div>
+      <div>
+        <div class="insight-title">主要瓶頸不是排序，而是召回</div>
+        <div class="insight-body">若以主管最終選擇作為暫時標準答案，AI top5 只覆蓋了 36.4% 的 decision event。最大缺口不是把 top1 排得更前，而是候選池本身經常沒有把主管會選的人找進來。</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div class="insight-title">距離「全自動指派」仍有明顯落差</div>
+        <div class="insight-body">若直接採用 AI top1，只有 15.2% 的事件會與主管當次決策一致。模型現階段比較像決策輔助工具，而非可直接接管分案的自動指派器。</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="insight-title">主管採用 AI 時，不只看第一名</div>
+        <div class="insight-body">在已採用 AI 的 12 筆事件中，top1 與 top2 各占 41.7%。主管決策模式較像「接受 AI 的候選範圍，再做最後裁決」，而不是機械式信任第一名。</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      </div>
+      <div>
+        <div class="insight-title">不同組織單位的成熟度並不一致</div>
+        <div class="insight-body">業務一部、業務二部、台中業務部的採用率分別約為 26.7%、46.7%、33.3%，暗示分群推進比全線同步自動化更合理。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dept chart + Why adoption != quality -->
+  <div class="section-grid equal-col">
+    <div class="card">
+      <div class="card-title">部門別 AI 採用率</div>
+      <div class="card-desc">不同單位的適配程度可能不同，不宜直接假設可同時全面自動化。</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="deptChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">為什麼 adoption 不是 quality 的同義詞</div>
+      <div class="card-desc">採用率低，可能包含模型不準；但採用率本身混合了模型、情境與組織三層因素。</div>
+      <div style="margin-top:0.75rem">
+        <div class="layer-block">
+          <div class="layer-title">第一層：模型品質</div>
+          <div class="layer-body">AI top5 有沒有找進主管最後會選的人？top1 排序是否夠前？</div>
+        </div>
+        <div class="arrow-sep">↓</div>
+        <div class="layer-block">
+          <div class="layer-title">第二層：未入模條件</div>
+          <div class="layer-body">顧問負載、客戶關係、區域分工、特殊設定、近期不可接案狀況等。</div>
+        </div>
+        <div class="arrow-sep">↓</div>
+        <div class="layer-block">
+          <div class="layer-title">第三層：主管採用行為</div>
+          <div class="layer-body">主管是否信任 AI、是否習慣 override、是否承擔結果責任，都會影響 adoption。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy + Next steps -->
+  <div class="section-grid equal-col" style="margin-top:1rem">
+    <div class="card">
+      <div class="card-title">對產品策略的意義</div>
+      <div class="card-desc">若終局是直接自動指派，當前策略不應只盯著排序精度，而應同步補足資料與規則層。</div>
+      <div>
+        <div class="strategy-item">
+          <svg class="check-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="font-size:13px;color:#666;line-height:1.65">先把模型定位成「縮窄搜尋空間」的工具，而不是直接宣告可取代主管，讓團隊把力氣放在正確缺口上。</div>
+        </div>
+        <div class="strategy-item">
+          <svg class="check-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="font-size:13px;color:#666;line-height:1.65">優先提高 Recall@5，因為候選池沒有把主管會選的人找進來時，後續再精細調整排序也無法真正接近全自動。</div>
+        </div>
+        <div class="strategy-item">
+          <svg class="check-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="font-size:13px;color:#666;line-height:1.65">將 override 模式結構化為規則或特徵，這是從「主管腦中經驗」轉化為「模型可學知識」的必要一步。</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">下一步最值得做的四件事</div>
+      <div class="card-desc">這些工作會比單純增加一張採用率圖表更接近自動指派目標。</div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">先把 manual case 的 AI top5 名單補齊，確認主管最終選擇是否接近 top5 邊界，或根本不在候選池中。</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">將 override 的常見因素結構化：顧問負載、客戶關係、近期案件狀態、區域分工、特殊設定等。</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">將評估框架拆成三層：Recall@5、Top1 exact match、部門 / 職類 readiness，避免只看 adoption rate 而誤判模型進度。</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">以高適配單位先推條件式自動指派，高召回且高穩定職類先自動，其餘仍保留主管覆核。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="section-grid equal-col" style="margin-top:1rem">
+    <div class="alert-card alert-amber">
+      <div class="alert-title">⚠ 當前資料限制</div>
+      <div class="alert-body">manual 時的 AI top5 名單尚未完整整理，因此目前只能精準判讀 adoption 與 readiness 的輪廓，尚無法全面追查每一筆 override 的真正原因與距離。</div>
+    </div>
+    <div class="alert-card alert-neutral">
+      <div class="alert-title">建議的核心管理指標</div>
+      <div class="alert-body">不要只看 AI adoption rate。請至少同時追蹤：Recall@5、Top1 exact match、部門 / 職類 readiness，以及 manual override reason，才足以支撐自動指派路線圖。</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const blue1 = '#3266ad', blue2 = '#185FA5', blue3 = '#85B7EB';
+const gray1 = '#2c2c2a', gray2 = '#888780';
+const teal1 = '#1D9E75';
+
+new Chart(document.getElementById('decisionChart'), {
+  type: 'bar',
+  data: {
+    labels: ['manual', 'ai_top1', 'ai_top2', 'ai_top3', 'ai_top4'],
+    datasets: [{
+      label: '件數',
+      data: [21, 5, 5, 1, 1],
+      backgroundColor: [gray1, blue1, blue1, blue2, blue2],
+      borderRadius: 8,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+      y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { stepSize: 5, font: { size: 12 } }, beginAtZero: true }
+    }
+  }
+});
+
+new Chart(document.getElementById('adoptionChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['AI 採用', 'Manual'],
+    datasets: [{
+      data: [12, 21],
+      backgroundColor: [blue1, gray2],
+      borderWidth: 0,
+      hoverOffset: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '62%',
+    plugins: { legend: { display: false } }
+  }
+});
+
+new Chart(document.getElementById('funnelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['全部 decision event', 'AI top5 命中主管選擇', 'AI top1 = 主管選擇'],
+    datasets: [{
+      label: '件數',
+      data: [33, 12, 5],
+      backgroundColor: [gray1, blue1, teal1],
+      borderRadius: 8,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} 件` } } },
+    scales: {
+      x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { stepSize: 10, font: { size: 12 } }, beginAtZero: true },
+      y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+    }
+  }
+});
+
+new Chart(document.getElementById('deptChart'), {
+  type: 'bar',
+  data: {
+    labels: ['業務一部', '業務二部', '台中業務部'],
+    datasets: [{
+      label: 'AI 採用率 (%)',
+      data: [26.7, 46.7, 33.3],
+      backgroundColor: [blue2, blue1, blue3],
+      borderRadius: 8,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+      y: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => v + '%', font: { size: 12 } },
+        beginAtZero: true, max: 60
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
