@@ -5,58 +5,176 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>獵才AI分案分析報告 v16</title>
 <style>
-body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;margin:0;background:#f3f6fb;color:#1f2937;}
-.container{max-width:1400px;margin:0 auto;padding:22px;}
-h1{margin:0 0 18px 0;font-size:34px;}
-h2{margin:0 0 12px 0;font-size:28px;}
-h3{margin:18px 0 10px 0;font-size:20px;}
-h4{margin:0 0 8px 0;font-size:18px;color:#123a7a;}
-.top-tabs,.sub-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
-.tab,.subtab{border:none;border-radius:999px;padding:10px 18px;background:#e6edf8;color:#274472;cursor:pointer;font-weight:700;}
-.tab.active,.subtab.active{background:#2563eb;color:#fff;}
-.page{display:none;}
-.page.active{display:block;}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
-.card{background:#fff;border:1px solid #d7e2f0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
-.card .label{font-size:13px;color:#64748b;margin-bottom:6px;}
-.card .value{font-size:28px;font-weight:800;color:#0f172a;}
-.chart-box{background:#fff;border:1px solid #d7e2f0;border-radius:12px;padding:14px 16px;margin:12px 0 18px 0;box-shadow:0 1px 2px rgba(0,0,0,.04);}
-.chart-link{text-align:right;color:#2563eb;font-weight:700;cursor:pointer;margin-bottom:8px;}
-.bar-row{display:grid;grid-template-columns:180px 1fr 90px;gap:12px;align-items:center;margin:11px 0;}
-.bar-label{font-weight:600;}
-.bar-wrap{height:14px;background:#e8eef7;border-radius:999px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:999px;}
-.bar-value{text-align:right;font-weight:700;color:#334155;}
-.analysis{background:#fff;border:1px solid #d7e2f0;border-radius:12px;padding:18px 20px;line-height:1.9;box-shadow:0 1px 2px rgba(0,0,0,.04);margin:12px 0 20px 0;}
-.analysis p{margin:0 0 12px 0;}
-.long-block{background:#fff;border:1px solid #d7e2f0;border-radius:12px;padding:18px 20px;line-height:1.9;box-shadow:0 1px 2px rgba(0,0,0,.04);margin:14px 0;}
-.formula{display:inline-block;background:#0f172a;color:#fff;padding:8px 12px;border-radius:8px;font-weight:700;letter-spacing:.3px;}
-.detail-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;}
-.detail-table th,.detail-table td{border:1px solid #d7e2f0;padding:10px 12px;vertical-align:top;font-size:14px;}
-.detail-table th{background:#e8eef8;color:#1e3a8a;position:sticky;top:0;}
-.note{background:#eef4ff;border-left:5px solid #2563eb;padding:14px 16px;border-radius:12px;line-height:1.8;margin:10px 0 18px 0;}
-.empty{padding:16px;background:#fff;border-radius:12px;border:1px dashed #cbd5e1;color:#64748b;}
-.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:50;}
-.modal-content{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1200px,92vw);max-height:82vh;overflow:auto;background:#fff;border-radius:16px;padding:18px 18px 24px 18px;}
-.close{float:right;font-size:28px;cursor:pointer;color:#475569;}
-.small{font-size:13px;color:#64748b;}
-@media (max-width:900px){.bar-row{grid-template-columns:120px 1fr 70px;}}
 
-.chart-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;}
-.link-btn{border:none;border-radius:999px;padding:6px 12px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:700;}
-.table-wrap{overflow:auto;}
-
-
-#pstruct .table-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid #d7e2f0;border-radius:12px;background:#fff;margin-top:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);} 
-#pstruct .table-wrap table{width:max-content;min-width:1460px;border-collapse:collapse;table-layout:auto;background:#fff;} 
-#pstruct .table-wrap th,#pstruct .table-wrap td{white-space:nowrap;text-align:center;padding:10px 12px;font-size:15px;line-height:1.5;border-bottom:1px solid #e5e7eb;} 
-#pstruct .table-wrap th{background:#f8fafc;position:sticky;top:0;z-index:1;} 
-#pstruct .table-wrap th:first-child,#pstruct .table-wrap td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:2;} 
-#pstruct .table-wrap th:first-child{background:#f8fafc;z-index:3;} 
-#pstruct .note{margin-top:12px;} 
-#pstruct .analysis, #pstruct .chart-box{overflow:visible;} 
-
+:root {
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --soft:#f8fafc;
+  --line:#e2e8f0;
+  --text:#0f172a;
+  --muted:#475569;
+  --muted-2:#64748b;
+  --ai-blue:#3A6DB3;
+  --deep-charcoal:#111827;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text)}
+.container{max-width:1480px;margin:0 auto;padding:18px}
+h1{margin:0 0 18px 0;font-size:44px;line-height:1.08;letter-spacing:-.03em;font-weight:700;color:var(--text)}
+h2{margin:0 0 12px 0;font-size:30px;letter-spacing:-.02em;color:var(--text)}
+h3{margin:18px 0 10px 0;font-size:22px;letter-spacing:-.02em;color:var(--text)}
+h4{margin:0 0 10px 0;font-size:18px;letter-spacing:-.01em;color:var(--text)}
+.top-tabs,.sub-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 18px 0}
+.tab,.subtab{border:none;border-radius:999px;padding:10px 18px;background:#e2e8f0;color:#334155;cursor:pointer;font-weight:800;letter-spacing:.01em;transition:all .16s ease;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+.tab:hover,.subtab:hover{transform:translateY(-1px);background:#dbe4ef}
+.tab.active,.subtab.active{background:var(--deep-charcoal);color:#fff;box-shadow:0 6px 18px rgba(15,23,42,.12)}
+.page{display:none;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:24px 24px 28px;box-shadow:0 1px 2px rgba(15,23,42,.03),0 6px 18px rgba(15,23,42,.03)}
+.page.active{display:block}
+.small{font-size:14px;color:var(--muted);line-height:1.8}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:18px 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 18px 16px;box-shadow:0 1px 2px rgba(15,23,42,.03);min-height:118px}
+.card .label{font-size:13px;color:var(--muted-2);margin-bottom:6px}
+.card .value{margin-top:8px;font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+.chart-box{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px 18px 16px;margin:14px 0 18px 0;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+.chart-link{text-align:right;color:#2563eb;font-weight:800;cursor:pointer;margin-bottom:10px;text-decoration:underline;text-underline-offset:3px}
+.bar-row{display:grid;grid-template-columns:180px 1fr 90px;gap:12px;align-items:center;margin:12px 0}
+.bar-label{font-weight:700;color:var(--text)}
+.bar-wrap{height:14px;background:#e8eef7;border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px}
+.bar-value{text-align:right;font-weight:800;color:#334155}
+.analysis{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:20px 22px;line-height:1.9;box-shadow:0 1px 2px rgba(15,23,42,.03);margin:14px 0 20px 0;color:var(--text)}
+.analysis p{margin:0 0 12px 0;color:var(--muted);font-size:15px}
+.analysis b{color:var(--text)}
+.long-block{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:20px 22px;line-height:1.9;box-shadow:0 1px 2px rgba(15,23,42,.03);margin:14px 0;color:var(--muted)}
+.formula{display:inline-block;background:var(--deep-charcoal);color:#fff;padding:8px 12px;border-radius:10px;font-weight:700;letter-spacing:.3px}
+.detail-table{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden}
+.detail-table th,.detail-table td{border:1px solid #eef2f7;padding:10px 12px;vertical-align:top;font-size:14px;line-height:1.7}
+.detail-table th{background:#f8fafc;color:#334155;position:sticky;top:0}
+.note{margin-top:12px;padding:14px 16px;border-radius:18px;background:var(--soft);border:1px solid var(--line);color:#334155;line-height:1.8;margin-bottom:18px}
+.empty{padding:16px;background:#fff;border-radius:18px;border:1px dashed #cbd5e1;color:#64748b}
+.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:50}
+.modal-content{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1200px,92vw);max-height:82vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:28px;padding:18px 18px 24px 18px;box-shadow:0 20px 48px rgba(15,23,42,.18)}
+.close{float:right;font-size:28px;cursor:pointer;color:#475569}
+.chart-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.link-btn{border:none;border-radius:999px;padding:6px 12px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:800}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff}
+#pstruct .table-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:18px;background:#fff;margin-top:8px;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+#pstruct .table-wrap table{width:max-content;min-width:1460px;border-collapse:collapse;table-layout:auto;background:#fff}
+#pstruct .table-wrap th,#pstruct .table-wrap td{white-space:nowrap;text-align:center;padding:10px 12px;font-size:15px;line-height:1.6;border-bottom:1px solid #eef2f7}
+#pstruct .table-wrap th{background:#f8fafc;position:sticky;top:0;z-index:1;color:#334155}
+#pstruct .table-wrap th:first-child,#pstruct .table-wrap td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:2}
+#pstruct .table-wrap th:first-child{background:#f8fafc;z-index:3}
+#pstruct .note{margin-top:12px}
+#pstruct .analysis, #pstruct .chart-box{overflow:visible}
+@media (max-width:900px){.bar-row{grid-template-columns:120px 1fr 70px}.container{padding:12px}h1{font-size:36px}.page{padding:20px 18px 24px}}
 </style>
+
+<style id="oai-editor-style">
+:root{
+  --oai-editor-width: 380px;
+  --oai-editor-gap: 18px;
+  --oai-handle-width: 28px;
+  --oai-editor-line: rgba(255,255,255,.12);
+  --oai-editor-text: #f8fafc;
+  --oai-editor-muted: rgba(226,232,240,.85);
+  --oai-panel-edge: 16px;
+}
+body{transition:padding-right .24s ease}
+.oai-editor-handle{transition:right .26s ease;}
+body.editor-open .container{
+  max-width: calc(1480px + var(--oai-editor-width) + 40px);
+  padding-right: calc(var(--oai-editor-width) + var(--oai-editor-gap) + 10px);
+}
+.oai-editor-panel{
+  position:fixed;
+  top:16px;
+  right:var(--oai-panel-edge);
+  width:var(--oai-editor-width);
+  height:calc(100vh - 32px);
+  background:linear-gradient(180deg,#13264c 0%, #0f1e3b 100%);
+  color:var(--oai-editor-text);
+  border-radius:24px;
+  box-shadow:0 20px 48px rgba(15,23,42,.24);
+  z-index:9998;
+  display:flex;
+  flex-direction:column;
+  transform:translateX(0);
+  transition:transform .26s ease, box-shadow .26s ease;
+  overflow:hidden;
+}
+.oai-editor-panel.is-collapsed{
+  transform:translateX(calc(100% + var(--oai-panel-edge)));
+  box-shadow:none;
+}
+.oai-editor-handle{
+  position:fixed;
+  right:var(--oai-panel-edge);
+  top:110px;
+  width:var(--oai-handle-width);
+  height:88px;
+  border:1px solid rgba(15,23,42,.08);
+  border-right:0;
+  border-radius:16px 0 0 16px;
+  background:rgba(255,255,255,.96);
+  color:#0f172a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:-4px 8px 20px rgba(15,23,42,.14);
+  font-size:30px;
+  line-height:1;
+  user-select:none;
+  z-index:9999;
+}
+body.editor-open .oai-editor-handle{
+  right:calc(var(--oai-panel-edge) + var(--oai-editor-width));
+}
+.oai-editor-head{padding:24px 24px 18px 40px;border-bottom:1px solid var(--oai-editor-line)}
+.oai-editor-title{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.oai-editor-sub{margin-top:10px;font-size:13px;line-height:1.75;color:var(--oai-editor-muted)}
+.oai-editor-head-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.oai-editor-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 16px 14px;border-bottom:1px solid var(--oai-editor-line)}
+.oai-editor-btn{appearance:none;border:none;border-radius:14px;padding:12px 14px;font-size:13px;font-weight:800;cursor:pointer;transition:transform .15s ease,background .15s ease,color .15s ease}
+.oai-editor-btn:hover{transform:translateY(-1px)}
+.oai-editor-btn:disabled{cursor:not-allowed;opacity:.55;transform:none !important}
+.oai-editor-btn.primary{background:#fff;color:#0f172a}
+.oai-editor-btn.secondary{background:#eef2f7;color:#334155;border:1px solid #d8e2ee}
+.oai-blue-toggle-btn,.oai-partial-blue-btn{background:rgba(78,121,167,.10);color:#34577d;border:1px solid rgba(78,121,167,.42)}
+.oai-blue-toggle-btn.is-active,.oai-partial-blue-btn.is-active{background:#4e79a7;color:#fff;border-color:#4e79a7}
+.oai-toggle-display-btn{margin-top:0;width:100%}
+.oai-editor-status{margin-top:10px;font-size:12px;line-height:1.7;color:var(--oai-editor-muted)}
+.oai-editor-body{flex:1;overflow:auto;padding:16px}
+.oai-editor-note{font-size:12px;line-height:1.7;color:var(--oai-editor-muted);margin-bottom:14px}
+.oai-editor-group{background:rgba(255,255,255,.96);border:1px solid rgba(203,213,225,.95);border-radius:18px;padding:14px;margin-bottom:14px;color:#0f172a}
+.oai-editor-group-title{font-size:14px;font-weight:800;margin-bottom:12px}
+.oai-editor-field{margin-bottom:12px;padding:2px 4px;transition:box-shadow .15s ease, background .15s ease}
+.oai-editor-field:last-child{margin-bottom:0}
+.oai-editor-field.is-selected{background:rgba(59,130,246,.06);box-shadow:0 0 0 2px rgba(78,121,167,.20);border-radius:14px}
+.oai-editor-label{display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:6px}
+.oai-editor-field.is-selected .oai-editor-label{color:#1d4ed8}
+.oai-editor-input,.oai-editor-textarea{width:100%;border-radius:12px;border:1px solid #cbd5e1;padding:10px 12px;font-size:13px;line-height:1.6;color:#0f172a;background:#fff;outline:none}
+.oai-editor-input:focus,.oai-editor-textarea:focus{border-color:#3A6DB3;box-shadow:0 0 0 3px rgba(58,109,179,.14)}
+.oai-editor-textarea{min-height:92px;resize:vertical}
+.oai-editable-target{transition:outline-color .18s ease, box-shadow .18s ease}
+body.editor-open .oai-editable-target{cursor:pointer}
+body.editor-open .oai-editable-target:hover{outline:2px dashed rgba(58,109,179,.4);outline-offset:3px}
+body.editor-open .oai-editable-target.oai-selected-target{outline:2px solid rgba(78,121,167,.58);outline-offset:3px}
+body.editor-collapsed .oai-editable-target{cursor:default !important;outline:none !important}
+.oai-editable-target.oai-blue-text,
+.oai-editable-target.oai-blue-text *,
+.oai-editable-target.oai-blue-text b,
+.oai-editable-target.oai-blue-text strong{
+  color:#4e79a7 !important;
+}
+.oai-inline-blue{color:#4e79a7 !important}
+@media (max-width: 1380px){
+  body.editor-open .container{max-width:1480px;padding-right:22px}
+  :root{--oai-panel-edge:12px}
+  .oai-editor-panel{width:min(var(--oai-editor-width),calc(100vw - 24px));right:var(--oai-panel-edge);top:12px;height:calc(100vh - 24px)}
+}
+</style>
+
 </head>
 <body>
 <div class="container">
@@ -185,6 +303,36 @@ h4{margin:0 0 8px 0;font-size:18px;color:#123a7a;}
   </section>
 </div>
 
+
+<div id="oaiEditorHandle" class="oai-editor-handle" title="切換展示 / 編輯模式">‹</div>
+<div id="oaiEditorPanel" class="oai-editor-panel">
+  <div class="oai-editor-head">
+    <div class="oai-editor-title">文案側欄編輯器</div>
+    <div class="oai-editor-sub">
+      右側直接改字，左側即時更新。展示時可用左側把手收合為展示模式。<br/>
+      此編輯器以文字敘事為主，不會同步改動圖表底層資料與彈窗明細。
+    </div>
+    <div class="oai-editor-head-actions">
+      <button id="oaiToggleDisplayBtn" class="oai-editor-btn secondary oai-toggle-display-btn" type="button">切換展示模式</button>
+      <button id="oaiBlueToggleBtn" class="oai-editor-btn secondary oai-blue-toggle-btn" type="button" disabled>藍字：關</button>
+      <button id="oaiPartialBlueBtn" class="oai-editor-btn secondary oai-partial-blue-btn" type="button" disabled>局部藍字：套用</button>
+    </div>
+    <div id="oaiBlueTargetStatus" class="oai-editor-status">先點右側欄位或左側文字，再切換藍字。</div>
+  </div>
+  <div class="oai-editor-controls">
+    <button id="oaiSaveBtn" class="oai-editor-btn primary" type="button">儲存到瀏覽器</button>
+    <button id="oaiResetBtn" class="oai-editor-btn secondary" type="button">還原預設文字</button>
+    <button id="oaiExportBtn" class="oai-editor-btn secondary" type="button">匯出 JSON 文案</button>
+    <button id="oaiImportBtn" class="oai-editor-btn secondary" type="button">匯入 JSON 文案</button>
+    <input id="oaiImportInput" type="file" accept="application/json" style="display:none" />
+  </div>
+  <div class="oai-editor-body">
+    <div class="oai-editor-note">右側會顯示「全域內容 + 目前頁籤內容」；切換頁籤或子頁籤後，欄位會自動更新。</div>
+    <div id="oaiEditorFields"></div>
+  </div>
+</div>
+
+
 <div id="modal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
@@ -249,4 +397,519 @@ function openModal(key){
 function closeModal(){ qs('#modal').style.display='none'; }
 qs('#modal').addEventListener('click', (e) => { if (e.target.id==='modal') closeModal(); });
 </script>
+
+<script id="oai-editor-script">
+(function(){
+  const STORAGE_KEY = 'oai_editor_report_v20';
+  const STATE_KEY = STORAGE_KEY + '_state';
+  const BLUE_KEY = STORAGE_KEY + '_blue';
+  const HTML_KEY = STORAGE_KEY + '_html';
+  const body = document.body;
+  const panel = document.getElementById('oaiEditorPanel');
+  const handle = document.getElementById('oaiEditorHandle');
+  const toggleBtn = document.getElementById('oaiToggleDisplayBtn');
+  const blueToggleBtn = document.getElementById('oaiBlueToggleBtn');
+  const partialBlueBtn = document.getElementById('oaiPartialBlueBtn');
+  const blueTargetStatus = document.getElementById('oaiBlueTargetStatus');
+  const saveBtn = document.getElementById('oaiSaveBtn');
+  const resetBtn = document.getElementById('oaiResetBtn');
+  const exportBtn = document.getElementById('oaiExportBtn');
+  const importBtn = document.getElementById('oaiImportBtn');
+  const importInput = document.getElementById('oaiImportInput');
+  const fieldsRoot = document.getElementById('oaiEditorFields');
+
+  const registry = [];
+  const defaultTextMap = {};
+  const defaultHtmlMap = {};
+  let currentValues = {};
+  let currentBlueMap = {};
+  let currentHtmlMap = {};
+  let currentSelectedKey = null;
+  let currentState = localStorage.getItem(STATE_KEY) || 'open';
+  let refreshTimer = null;
+
+  function byText(el){ return (el && (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim()) || ''; }
+  function safeGroupName(name){ return (name || '').replace(/\s+/g, ' ').trim() || '未分類'; }
+  function ensureDefault(key, el){
+    if(!(key in defaultTextMap)) defaultTextMap[key] = byText(el);
+    if(!(key in defaultHtmlMap)) defaultHtmlMap[key] = el.innerHTML;
+  }
+  function findItem(key){
+    return registry.find(function(item){ return item.key === key; }) || null;
+  }
+  function closestEditableTarget(node){
+    const el = node ? (node.nodeType === 1 ? node : node.parentElement) : null;
+    return el && el.closest ? el.closest('.oai-editable-target') : null;
+  }
+  function closestInlineBlue(node){
+    const el = node ? (node.nodeType === 1 ? node : node.parentElement) : null;
+    return el && el.closest ? el.closest('.oai-inline-blue') : null;
+  }
+  function getSelectionInfo(){
+    const sel = window.getSelection ? window.getSelection() : null;
+    if(!sel || !sel.rangeCount) return null;
+    const range = sel.getRangeAt(0);
+    if(range.collapsed) return null;
+    const startTarget = closestEditableTarget(range.startContainer);
+    const endTarget = closestEditableTarget(range.endContainer);
+    if(!startTarget || !endTarget || startTarget !== endTarget) return null;
+    const key = startTarget.dataset.editKey;
+    const item = findItem(key);
+    if(!item) return null;
+    const text = (sel.toString() || '').replace(/\s+/g, ' ').trim();
+    if(!text) return null;
+    return { sel, range, key, item, target: startTarget, text };
+  }
+  function selectionLooksBlue(info){
+    if(!info) return false;
+    const startBlue = closestInlineBlue(info.range.startContainer);
+    const endBlue = closestInlineBlue(info.range.endContainer);
+    return !!(startBlue && startBlue === endBlue);
+  }
+  function unwrapNode(node){
+    if(!node || !node.parentNode) return;
+    const parent = node.parentNode;
+    while(node.firstChild) parent.insertBefore(node.firstChild, node);
+    parent.removeChild(node);
+  }
+  function normalizeInlineBlue(root){
+    if(!root) return;
+    root.querySelectorAll('span.oai-inline-blue span.oai-inline-blue').forEach(function(node){ unwrapNode(node); });
+    root.querySelectorAll('span.oai-inline-blue').forEach(function(node){
+      if(!node.textContent || !node.textContent.trim()) unwrapNode(node);
+    });
+    let changed = true;
+    while(changed){
+      changed = false;
+      root.querySelectorAll('span.oai-inline-blue').forEach(function(node){
+        const next = node.nextSibling;
+        if(next && next.nodeType === 1 && next.classList.contains('oai-inline-blue')){
+          while(next.firstChild) node.appendChild(next.firstChild);
+          next.remove();
+          changed = true;
+        }
+      });
+    }
+    root.normalize();
+  }
+  function syncItemHtmlState(item){
+    if(!item || !item.el) return;
+    currentHtmlMap[item.key] = item.el.innerHTML;
+    currentValues[item.key] = byText(item.el);
+    const input = document.getElementById('editor_' + item.key);
+    if(input) input.value = currentValues[item.key];
+  }
+  function applyBlueState(item){
+    if(!item || !item.el) return;
+    item.el.classList.toggle('oai-blue-text', !!currentBlueMap[item.key]);
+  }
+  function updateSelectionUi(){
+    document.querySelectorAll('.oai-editor-field.is-selected').forEach(function(el){ el.classList.remove('is-selected'); });
+    document.querySelectorAll('.oai-selected-target').forEach(function(el){ el.classList.remove('oai-selected-target'); });
+    const selectionInfo = getSelectionInfo();
+    if(partialBlueBtn){
+      const hasPartialSelection = !!selectionInfo;
+      const partialBlue = hasPartialSelection && selectionLooksBlue(selectionInfo);
+      partialBlueBtn.disabled = !hasPartialSelection;
+      partialBlueBtn.classList.toggle('is-active', partialBlue);
+      partialBlueBtn.textContent = partialBlue ? '局部藍字：取消' : '局部藍字：套用';
+    }
+    if(!currentSelectedKey){
+      if(blueToggleBtn){
+        blueToggleBtn.disabled = true;
+        blueToggleBtn.classList.remove('is-active');
+        blueToggleBtn.textContent = '藍字：關';
+      }
+      if(blueTargetStatus) blueTargetStatus.textContent = selectionInfo ? '已框選文字：「' + selectionInfo.text + '」，可點「局部藍字」套用。' : '先點右側欄位或左側文字；若要局部標註，請直接在左側報表框選文字。';
+      return;
+    }
+    const selectedItem = findItem(currentSelectedKey);
+    if(!selectedItem){
+      currentSelectedKey = null;
+      if(blueToggleBtn){
+        blueToggleBtn.disabled = true;
+        blueToggleBtn.classList.remove('is-active');
+        blueToggleBtn.textContent = '藍字：關';
+      }
+      if(blueTargetStatus) blueTargetStatus.textContent = '目前頁面找不到先前選取的欄位，請重新點選。';
+      return;
+    }
+    const input = document.getElementById('editor_' + currentSelectedKey);
+    if(input && input.parentElement) input.parentElement.classList.add('is-selected');
+    selectedItem.el.classList.add('oai-selected-target');
+    const isBlue = !!currentBlueMap[currentSelectedKey];
+    if(blueToggleBtn){
+      blueToggleBtn.disabled = false;
+      blueToggleBtn.classList.toggle('is-active', isBlue);
+      blueToggleBtn.textContent = isBlue ? '藍字：開' : '藍字：關';
+    }
+    if(blueTargetStatus){
+      if(selectionInfo && selectionInfo.key === currentSelectedKey){
+        blueTargetStatus.textContent = '目前目標：' + selectedItem.group + '｜' + selectedItem.label + (isBlue ? '｜整段為藍字' : '｜整段為黑字') + '｜已框選「' + selectionInfo.text + '」';
+      } else {
+        blueTargetStatus.textContent = '目前目標：' + selectedItem.group + '｜' + selectedItem.label + (isBlue ? '｜已標註藍字' : '｜目前為黑字');
+      }
+    }
+  }
+  function setSelectedKey(key){
+    currentSelectedKey = key || null;
+    updateSelectionUi();
+  }
+  function toggleBlueForCurrent(){
+    const selectedItem = findItem(currentSelectedKey);
+    if(!selectedItem) return;
+    if(currentBlueMap[currentSelectedKey]) delete currentBlueMap[currentSelectedKey];
+    else currentBlueMap[currentSelectedKey] = true;
+    applyBlueState(selectedItem);
+    updateSelectionUi();
+  }
+  function togglePartialBlueForSelection(){
+    const info = getSelectionInfo();
+    if(!info){
+      alert('請先在左側報表中框選同一段文字，再使用局部藍字。');
+      updateSelectionUi();
+      return;
+    }
+    setSelectedKey(info.key);
+    const activeBlue = selectionLooksBlue(info) ? closestInlineBlue(info.range.startContainer) : null;
+    if(activeBlue){
+      unwrapNode(activeBlue);
+    } else {
+      const span = document.createElement('span');
+      span.className = 'oai-inline-blue';
+      try {
+        info.range.surroundContents(span);
+      } catch(err){
+        const frag = info.range.extractContents();
+        span.appendChild(frag);
+        info.range.insertNode(span);
+      }
+    }
+    normalizeInlineBlue(info.item.el);
+    syncItemHtmlState(info.item);
+    applyBlueState(info.item);
+    if(info.sel){ info.sel.removeAllRanges(); }
+    updateSelectionUi();
+  }
+  function addField(el, group, label, type, key){
+    if(!el) return;
+    const text = byText(el);
+    if(!text) return;
+    ensureDefault(key, el);
+    el.dataset.editKey = key;
+    el.classList.add('oai-editable-target');
+    registry.push({
+      key,
+      group: safeGroupName(group),
+      label,
+      type: type || 'textarea',
+      el,
+      defaultText: defaultTextMap[key],
+      defaultHtml: defaultHtmlMap[key]
+    });
+  }
+  function applyDefault(item){ item.el.innerHTML = item.defaultHtml; }
+  function applyHtml(item, value){ item.el.innerHTML = value; }
+  function applyValue(item, value){ item.el.innerText = value; }
+  function pageContext(pageEl){
+    const pageId = pageEl ? (pageEl.id || 'page') : 'global';
+    const activeSub = pageEl ? pageEl.querySelector('.subtab.active') : null;
+    const subgroup = activeSub ? (activeSub.dataset.subgroup || 'default') : 'default';
+    return { pageId, subgroup };
+  }
+  function scanGlobal(){
+    addField(document.querySelector('.container > h1'), '全域', '主標題', 'input', 'global__mainTitle');
+    const topNote = document.querySelector('.container > .note');
+    if(topNote) addField(topNote, '全域', '開場說明', 'textarea', 'global__topNote');
+  }
+  function scanActivePage(){
+    const page = document.querySelector('.page.active');
+    if(!page) return;
+    const ctx = pageContext(page);
+    const pagePrefix = 'page:' + ctx.pageId + '|sub:' + ctx.subgroup;
+    const pageName = byText(page.querySelector(':scope > h2')) || ctx.pageId;
+
+    addField(page.querySelector(':scope > h2'), pageName, '頁面標題', 'input', pagePrefix + '__title');
+    addField(page.querySelector(':scope > .small'), pageName, '頁面說明', 'textarea', pagePrefix + '__small');
+
+    page.querySelectorAll(':scope > .note').forEach(function(el, idx){
+      addField(el, pageName, '頁面補充說明 ' + (idx + 1), 'textarea', pagePrefix + '__topNote_' + idx);
+    });
+
+    page.querySelectorAll('.cards .card .label').forEach(function(el, idx){
+      addField(el, pageName + '｜指標卡', '指標名稱 ' + (idx + 1), 'input', pagePrefix + '__cardLabel_' + idx);
+    });
+
+    page.querySelectorAll('.chart-box').forEach(function(box, boxIdx){
+      const group = pageName + '｜圖表 ' + (boxIdx + 1);
+      const link = box.querySelector('.chart-link');
+      if(link) addField(link, group, '明細連結文案', 'input', pagePrefix + '__chartLink_' + boxIdx);
+      box.querySelectorAll('.bar-label').forEach(function(el, idx){
+        addField(el, group, '圖列標籤 ' + (idx + 1), 'input', pagePrefix + '__barLabel_' + boxIdx + '_' + idx);
+      });
+    });
+
+    page.querySelectorAll('.analysis').forEach(function(block, blockIdx){
+      const group = pageName + '｜分析區 ' + (blockIdx + 1);
+      addField(block.querySelector('h4'), group, '分析標題', 'input', pagePrefix + '__analysisTitle_' + blockIdx);
+      block.querySelectorAll('p').forEach(function(el, idx){
+        addField(el, group, '段落 ' + (idx + 1), 'textarea', pagePrefix + '__analysisP_' + blockIdx + '_' + idx);
+      });
+      block.querySelectorAll('li').forEach(function(el, idx){
+        addField(el, group, '條列 ' + (idx + 1), 'textarea', pagePrefix + '__analysisLi_' + blockIdx + '_' + idx);
+      });
+    });
+
+    page.querySelectorAll('.long-block').forEach(function(block, blockIdx){
+      const group = pageName + '｜長文區 ' + (blockIdx + 1);
+      block.querySelectorAll('h3, h4, p, li').forEach(function(el, idx){
+        const tag = el.tagName.toLowerCase();
+        const type = /^h[34]$/.test(tag) ? 'input' : 'textarea';
+        addField(el, group, tag.toUpperCase() + ' ' + (idx + 1), type, pagePrefix + '__longBlock_' + blockIdx + '_' + tag + '_' + idx);
+      });
+    });
+
+    page.querySelectorAll('.detail-table').forEach(function(table, tableIdx){
+      const group = pageName + '｜表格 ' + (tableIdx + 1);
+      table.querySelectorAll('th').forEach(function(el, idx){
+        addField(el, group, '表頭 ' + (idx + 1), 'input', pagePrefix + '__tableTh_' + tableIdx + '_' + idx);
+      });
+      table.querySelectorAll('tbody tr').forEach(function(row, rowIdx){
+        row.querySelectorAll('td').forEach(function(el, colIdx){
+          addField(el, group, '內容 r' + (rowIdx + 1) + 'c' + (colIdx + 1), 'textarea', pagePrefix + '__tableTd_' + tableIdx + '_' + rowIdx + '_' + colIdx);
+        });
+      });
+    });
+
+    page.querySelectorAll('.empty').forEach(function(el, idx){
+      addField(el, pageName, '空狀態文案 ' + (idx + 1), 'textarea', pagePrefix + '__empty_' + idx);
+    });
+  }
+  function renderEditor(){
+    const groups = {};
+    registry.forEach(function(item){
+      if(!groups[item.group]) groups[item.group] = [];
+      groups[item.group].push(item);
+    });
+    fieldsRoot.innerHTML = '';
+    Object.keys(groups).forEach(function(groupName){
+      const groupEl = document.createElement('section');
+      groupEl.className = 'oai-editor-group';
+      const titleEl = document.createElement('div');
+      titleEl.className = 'oai-editor-group-title';
+      titleEl.textContent = groupName;
+      groupEl.appendChild(titleEl);
+      groups[groupName].forEach(function(item){
+        const fieldWrap = document.createElement('div');
+        fieldWrap.className = 'oai-editor-field';
+        const label = document.createElement('label');
+        label.className = 'oai-editor-label';
+        label.setAttribute('for', 'editor_' + item.key);
+        label.textContent = item.label;
+        fieldWrap.appendChild(label);
+        let input;
+        if(item.type === 'input'){
+          input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'oai-editor-input';
+        } else {
+          input = document.createElement('textarea');
+          input.className = 'oai-editor-textarea';
+        }
+        input.id = 'editor_' + item.key;
+        input.dataset.key = item.key;
+        if(Object.prototype.hasOwnProperty.call(currentValues, item.key)) input.value = currentValues[item.key];
+        else input.value = item.defaultText;
+        input.addEventListener('focus', function(){ setSelectedKey(item.key); });
+        input.addEventListener('click', function(){ setSelectedKey(item.key); });
+        input.addEventListener('input', function(e){
+          currentValues[item.key] = e.target.value;
+          delete currentHtmlMap[item.key];
+          applyValue(item, e.target.value);
+          applyBlueState(item);
+          updateSelectionUi();
+        });
+        fieldWrap.appendChild(input);
+        groupEl.appendChild(fieldWrap);
+      });
+      fieldsRoot.appendChild(groupEl);
+    });
+  }
+  function loadSaved(){
+    try{ currentValues = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
+    catch(err){ currentValues = {}; }
+    try{ currentBlueMap = JSON.parse(localStorage.getItem(BLUE_KEY) || '{}') || {}; }
+    catch(err){ currentBlueMap = {}; }
+    try{ currentHtmlMap = JSON.parse(localStorage.getItem(HTML_KEY) || '{}') || {}; }
+    catch(err){ currentHtmlMap = {}; }
+  }
+  function applySavedToCurrentNodes(){
+    registry.forEach(function(item){
+      if(Object.prototype.hasOwnProperty.call(currentHtmlMap, item.key)) applyHtml(item, currentHtmlMap[item.key]);
+      else if(Object.prototype.hasOwnProperty.call(currentValues, item.key)) applyValue(item, currentValues[item.key]);
+      else applyDefault(item);
+      applyBlueState(item);
+    });
+  }
+  function saveToLocal(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentValues));
+    localStorage.setItem(BLUE_KEY, JSON.stringify(currentBlueMap));
+    localStorage.setItem(HTML_KEY, JSON.stringify(currentHtmlMap));
+    saveBtn.textContent = '已儲存';
+    setTimeout(function(){ saveBtn.textContent = '儲存到瀏覽器'; }, 1200);
+  }
+  function resetDefaults(){
+    const page = document.querySelector('.page.active');
+    const ctx = pageContext(page);
+    const prefix = page ? ('page:' + ctx.pageId + '|sub:' + ctx.subgroup) : null;
+    if(prefix){
+      Object.keys(currentValues).forEach(function(key){ if(key.indexOf(prefix) === 0) delete currentValues[key]; });
+      Object.keys(currentBlueMap).forEach(function(key){ if(key.indexOf(prefix) === 0) delete currentBlueMap[key]; });
+      Object.keys(currentHtmlMap).forEach(function(key){ if(key.indexOf(prefix) === 0) delete currentHtmlMap[key]; });
+    } else {
+      currentValues = {};
+      currentBlueMap = {};
+      currentHtmlMap = {};
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(BLUE_KEY);
+    localStorage.removeItem(HTML_KEY);
+    if(Object.keys(currentValues).length){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentValues));
+    }
+    if(Object.keys(currentBlueMap).length){
+      localStorage.setItem(BLUE_KEY, JSON.stringify(currentBlueMap));
+    }
+    if(Object.keys(currentHtmlMap).length){
+      localStorage.setItem(HTML_KEY, JSON.stringify(currentHtmlMap));
+    }
+    refreshEditor();
+  }
+  function exportJson(){
+    const payload = { values: currentValues, blueMap: currentBlueMap, htmlMap: currentHtmlMap };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'report_v20_文案設定.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function importJsonFile(file){
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const data = JSON.parse(reader.result);
+        if(data && typeof data === 'object' && (data.values || data.blueMap || data.htmlMap)){
+          currentValues = Object.assign({}, data.values || {});
+          currentBlueMap = Object.assign({}, data.blueMap || {});
+          currentHtmlMap = Object.assign({}, data.htmlMap || {});
+        } else {
+          currentValues = Object.assign({}, data || {});
+          currentBlueMap = {};
+          currentHtmlMap = {};
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentValues));
+        localStorage.setItem(BLUE_KEY, JSON.stringify(currentBlueMap));
+        localStorage.setItem(HTML_KEY, JSON.stringify(currentHtmlMap));
+        refreshEditor();
+      } catch(err){
+        alert('JSON 解析失敗，請確認檔案格式。');
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+  function setState(next){
+    currentState = next === 'collapsed' ? 'collapsed' : 'open';
+    localStorage.setItem(STATE_KEY, currentState);
+    const collapsed = currentState === 'collapsed';
+    panel.classList.toggle('is-collapsed', collapsed);
+    body.classList.toggle('editor-open', !collapsed);
+    body.classList.toggle('editor-collapsed', collapsed);
+    handle.textContent = collapsed ? '‹' : '›';
+    toggleBtn.textContent = collapsed ? '返回編輯模式' : '切換展示模式';
+  }
+  function toggleState(){ setState(currentState === 'collapsed' ? 'open' : 'collapsed'); }
+  function bindClickableTargets(){
+    registry.forEach(function(item){
+      item.el.addEventListener('click', function(ev){
+        if(currentState === 'collapsed') return;
+        const liveSelection = getSelectionInfo();
+        if(liveSelection && liveSelection.key === item.key) {
+          setSelectedKey(item.key);
+          return;
+        }
+        const input = document.getElementById('editor_' + item.key);
+        if(!input) return;
+        ev.preventDefault();
+        setSelectedKey(item.key);
+        input.scrollIntoView({behavior:'smooth', block:'center'});
+        input.focus();
+      });
+      item.el.addEventListener('mouseup', function(){
+        if(currentState === 'collapsed') return;
+        setTimeout(function(){
+          const info = getSelectionInfo();
+          if(info && info.key === item.key) setSelectedKey(item.key);
+          else updateSelectionUi();
+        }, 0);
+      });
+    });
+  }
+  function refreshEditor(){
+    registry.length = 0;
+    scanGlobal();
+    scanActivePage();
+    applySavedToCurrentNodes();
+    renderEditor();
+    bindClickableTargets();
+    if(currentSelectedKey && !findItem(currentSelectedKey)) currentSelectedKey = null;
+    updateSelectionUi();
+  }
+  function scheduleRefresh(){
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(refreshEditor, 0);
+  }
+  function bindRefreshEvents(){
+    document.querySelectorAll('.tab, .subtab').forEach(function(btn){
+      btn.addEventListener('click', scheduleRefresh);
+    });
+    ['overviewSub','rankSub','hitmissSub','pstructSub'].forEach(function(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      const observer = new MutationObserver(scheduleRefresh);
+      observer.observe(el, {childList:true, subtree:true});
+    });
+  }
+  function init(){
+    loadSaved();
+    refreshEditor();
+    bindRefreshEvents();
+    handle.addEventListener('click', toggleState);
+    toggleBtn.addEventListener('click', toggleState);
+    if(blueToggleBtn) blueToggleBtn.addEventListener('click', toggleBlueForCurrent);
+    if(partialBlueBtn){
+      partialBlueBtn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+      partialBlueBtn.addEventListener('click', togglePartialBlueForSelection);
+    }
+    document.addEventListener('selectionchange', function(){
+      if(currentState === 'collapsed') return;
+      setTimeout(updateSelectionUi, 0);
+    });
+    saveBtn.addEventListener('click', saveToLocal);
+    resetBtn.addEventListener('click', resetDefaults);
+    exportBtn.addEventListener('click', exportJson);
+    importBtn.addEventListener('click', function(){ importInput.click(); });
+    importInput.addEventListener('change', function(e){ const file = e.target.files && e.target.files[0]; if(file) importJsonFile(file); importInput.value = ''; });
+    document.addEventListener('keydown', function(e){ if(e.ctrlKey && e.key === '\\'){ e.preventDefault(); toggleState(); } });
+    setState(currentState);
+    window.__OAI_EDITOR_READY__ = true;
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
 </body></html>
