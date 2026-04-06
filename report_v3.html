@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>獵才 AI 分案分析報告</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --line:#d9e2ef;
+  --blue:#4f78b8; --navy:#2c4369; --red:#b56f7b; --shadow:0 8px 24px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink);}
+.wrap{max-width:1480px;margin:0 auto;padding:24px 24px 56px;}
+.hero{background:linear-gradient(135deg,#eff6ff 0%,#ffffff 55%,#f8fafc 100%);border:1px solid #d7e3f3;border-radius:24px;padding:28px 30px 22px;box-shadow:var(--shadow);margin-bottom:20px;}
+.hero h1{margin:0 0 10px;font-size:34px;letter-spacing:.3px;color:#0b1220;font-weight:900;}
+.hero-meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin-bottom:12px;}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;background:#eef3f9;color:#516989;font-weight:700;font-size:13px;}
+.hero p{margin:10px 0 0;line-height:1.9;font-size:15px;}
+.top-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 16px;}
+.tab,.subtab,.metric-btn{border:none;border-radius:999px;padding:10px 18px;background:#edf2f7;color:#4a617d;cursor:pointer;font-weight:700;transition:.16s ease;}
+.tab.active,.subtab.active,.metric-btn.active{background:var(--blue);color:#fff;box-shadow:0 6px 14px rgba(79,120,184,.22);}
+.page{display:none;}
+.page.active{display:block;}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px;}
+.page-title{font-size:28px;margin:0 0 8px;}
+.page-desc{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:16px;}
+.sub-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 16px 14px;min-height:98px;}
+.card .label{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.card .value{font-size:28px;font-weight:800;letter-spacing:.2px;color:#0f172a;line-height:1.2;}
+.card .sub{font-size:12px;color:#64748b;margin-top:6px;line-height:1.5;}
+.kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 18px;}
+.kpi-pill{background:#f8fafc;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;}
+.kpi-pill strong{color:var(--navy);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.chart-box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;}
+.chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;}
+.chart-head h3{margin:0;font-size:18px;color:var(--navy);}
+.link-btn{border:none;border-radius:999px;padding:8px 12px;background:#eef3f8;color:#5a7392;font-weight:700;cursor:pointer;}
+.pie-wrap{display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:center;}
+.pie-shell{position:relative;width:160px;height:160px;margin:auto;}
+.pie{position:absolute;inset:0;width:160px;height:160px;border-radius:50%;margin:auto;box-shadow:inset 0 0 0 12px rgba(255,255,255,.92), 0 8px 20px rgba(15,23,42,.08);}
+.pie-label{position:absolute;transform:translate(-50%,-50%);padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.78);box-shadow:0 2px 8px rgba(15,23,42,.08);font-size:12px;font-weight:800;color:#334155;line-height:1;white-space:nowrap;}
+.legend{display:grid;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5;}
+.swatch{width:12px;height:12px;border-radius:999px;display:inline-block;flex:0 0 12px;}
+.metric-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.chart-caption{margin-bottom:10px;color:#64748b;font-size:13px;}
+.column-chart{position:relative;border:1px solid #e4ebf5;border-radius:18px;background:linear-gradient(180deg,#fcfdff 0%,#f8fbff 100%);padding:18px 14px 12px;overflow:hidden;}
+.column-chart::before{content:"";position:absolute;inset:18px 14px 48px 14px;background:repeating-linear-gradient(to top, rgba(148,163,184,.18) 0, rgba(148,163,184,.18) 1px, transparent 1px, transparent 25%);border-radius:12px;pointer-events:none;}
+.column-area{position:relative;height:260px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:14px;align-items:stretch;}
+.col-item{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;min-width:0;}
+.col-value{font-size:13px;font-weight:700;color:#475569;text-align:center;line-height:1.35;min-height:18px;}
+.col-track{position:relative;height:220px;border-radius:12px;overflow:hidden;}
+.col-bar{position:absolute;left:50%;transform:translateX(-50%);width:min(54px,70%);border-radius:14px 14px 6px 6px;box-shadow:0 10px 18px rgba(15,23,42,.08);}
+.col-bar.negative{border-radius:6px 6px 14px 14px;}
+.zero-line{position:absolute;left:14px;right:14px;height:1.5px;background:rgba(100,116,139,.42);bottom:calc(48px + var(--zero-bottom, 0%));pointer-events:none;}
+.col-label{font-size:13px;font-weight:700;color:#334155;text-align:center;line-height:1.5;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:40px;}
+@media (max-width:900px){.column-area{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;}.col-bar{width:min(44px,74%);}}
+.analysis{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;line-height:1.95;}
+.analysis h4{margin:0 0 10px;color:var(--navy);font-size:18px;}
+.analysis p{margin:0 0 12px;}
+.analysis p:last-child{margin-bottom:0;}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;}
+table{width:100%;border-collapse:collapse;min-width:900px;}
+th,td{padding:11px 12px;border-bottom:1px solid #e5edf6;text-align:left;font-size:14px;vertical-align:top;line-height:1.6;}
+th{position:sticky;top:0;background:#f8fbff;color:var(--navy);z-index:1;}
+.note{background:#eff6ff;border:1px solid #c7ddff;border-radius:16px;padding:16px 18px;line-height:1.85;color:#1e3a8a;}
+.note strong{color:#1e40af;}
+.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;}
+.level-section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;}
+.level-section h3{margin:0 0 10px;color:var(--navy);font-size:18px;}
+.level-section p{margin:0 0 10px;line-height:1.9;}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+.stat-mini{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fafcff;}
+.stat-mini .k{font-size:12px;color:var(--muted);margin-bottom:5px;}
+.stat-mini .v{font-size:22px;font-weight:800;color:#0f172a;}
+.empty{padding:22px;border:1px dashed #cbd5e1;border-radius:16px;background:#fff;color:#64748b;line-height:1.8;}
+.issue-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+.issue-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);}
+.issue-card h3{margin:0 0 10px;font-size:18px;color:var(--navy);}
+.issue-card .tag{display:inline-block;margin-bottom:10px;border-radius:999px;padding:5px 10px;background:#eef2ff;color:#4338ca;font-weight:700;font-size:12px;}
+.issue-card p{margin:0 0 10px;line-height:1.85;}
+.footer-note{margin-top:10px;color:var(--muted);font-size:13px;line-height:1.8;}
+.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:100;}
+.modal.active{display:block;}
+.modal-dialog{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1220px,94vw);max-height:84vh;overflow:auto;background:#fff;border-radius:20px;padding:20px 22px;box-shadow:0 24px 50px rgba(15,23,42,.28);}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;}
+.modal-head h3{margin:0;font-size:20px;color:var(--navy);}
+.close{border:none;background:none;font-size:30px;cursor:pointer;color:#475569;line-height:1;}
+.small{font-size:13px;color:var(--muted);}
+@media (max-width:1080px){
+  .grid-2,.two-col,.pie-wrap{grid-template-columns:1fr;}
+  .pie{width:140px;height:140px;}
+}
+@media (max-width:720px){
+  .wrap{padding:18px 14px 40px;}
+  .hero{padding:22px 18px;}
+  .hero h1{font-size:28px;}
+  .page-title{font-size:24px;}
+  .bar-row{grid-template-columns:96px 1fr 70px;}
+}
+</style>
+
+<style id="oai-editor-style">
+:root{
+  --oai-editor-width: 388px;
+  --oai-editor-edge: 16px;
+  --oai-editor-line: rgba(255,255,255,.12);
+  --oai-editor-text: #f8fafc;
+  --oai-editor-muted: rgba(226,232,240,.86);
+}
+body{transition:padding-right .24s ease;}
+body.editor-open .wrap{
+  max-width: calc(1480px + var(--oai-editor-width) + 40px);
+  padding-right: calc(var(--oai-editor-width) + 30px);
+}
+.oai-editor-panel{
+  position:fixed; top:16px; right:var(--oai-editor-edge);
+  width:var(--oai-editor-width); height:calc(100vh - 32px);
+  background:linear-gradient(180deg,#13264c 0%, #0f1e3b 100%);
+  color:var(--oai-editor-text); border-radius:24px;
+  box-shadow:0 20px 48px rgba(15,23,42,.24);
+  z-index:9998; display:flex; flex-direction:column; overflow:hidden;
+  transform:translateX(0); transition:transform .26s ease, box-shadow .26s ease;
+}
+.oai-editor-panel.is-collapsed{transform:translateX(calc(100% + var(--oai-editor-edge))); box-shadow:none;}
+.oai-editor-handle{
+  position:fixed; right:var(--oai-editor-edge); top:110px; width:28px; height:88px;
+  border:1px solid rgba(15,23,42,.08); border-right:0; border-radius:16px 0 0 16px;
+  background:rgba(255,255,255,.96); color:#0f172a; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; box-shadow:-4px 8px 20px rgba(15,23,42,.14); font-size:30px; line-height:1; user-select:none;
+  z-index:9999; transition:right .26s ease;
+}
+body.editor-open .oai-editor-handle{right:calc(var(--oai-editor-edge) + var(--oai-editor-width));}
+.oai-editor-head{padding:24px 24px 18px 40px; border-bottom:1px solid var(--oai-editor-line);}
+.oai-editor-title{font-size:16px; font-weight:800; letter-spacing:-.02em;}
+.oai-editor-sub{margin-top:10px; font-size:13px; line-height:1.75; color:var(--oai-editor-muted);}
+.oai-editor-controls{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px 16px 14px; border-bottom:1px solid var(--oai-editor-line);}
+.oai-editor-btn{appearance:none; border:none; border-radius:14px; padding:12px 14px; font-size:13px; font-weight:800; cursor:pointer; transition:transform .15s ease,background .15s ease,color .15s ease;}
+.oai-editor-btn:hover{transform:translateY(-1px);}
+.oai-editor-btn.primary{background:#fff;color:#0f172a;}
+.oai-editor-btn.secondary{background:#eef2f7;color:#334155;border:1px solid #d8e2ee;}
+.oai-toggle-display-btn{margin-top:14px; width:100%;}
+.oai-editor-status{margin-top:10px; font-size:12px; line-height:1.7; color:var(--oai-editor-muted);}
+.oai-editor-body{flex:1; overflow:auto; padding:16px;}
+.oai-editor-note{font-size:12px; line-height:1.7; color:var(--oai-editor-muted); margin-bottom:14px;}
+.oai-editor-group{background:rgba(255,255,255,.96); border:1px solid rgba(203,213,225,.95); border-radius:18px; padding:14px; margin-bottom:14px; color:#0f172a;}
+.oai-editor-group-title{font-size:14px; font-weight:800; margin-bottom:12px;}
+.oai-editor-field{margin-bottom:12px; padding:2px 4px; transition:box-shadow .15s ease, background .15s ease;}
+.oai-editor-field:last-child{margin-bottom:0;}
+.oai-editor-field.is-selected{background:rgba(59,130,246,.06); box-shadow:0 0 0 2px rgba(78,121,167,.20); border-radius:14px;}
+.oai-editor-label{display:block; font-size:12px; font-weight:800; color:#334155; margin-bottom:6px;}
+.oai-editor-field.is-selected .oai-editor-label{color:#1d4ed8;}
+.oai-editor-input,.oai-editor-textarea{
+  width:100%; border-radius:12px; border:1px solid #cbd5e1; padding:10px 12px; font-size:13px; line-height:1.6; color:#0f172a; background:#fff; outline:none;
+}
+.oai-editor-input:focus,.oai-editor-textarea:focus{border-color:#3A6DB3; box-shadow:0 0 0 3px rgba(58,109,179,.14);}
+.oai-editor-textarea{min-height:92px; resize:vertical;}
+.oai-editable-target{transition:outline-color .18s ease, box-shadow .18s ease;}
+body.editor-open .oai-editable-target{cursor:pointer;}
+body.editor-open .oai-editable-target:hover{outline:2px dashed rgba(58,109,179,.4); outline-offset:3px;}
+body.editor-open .oai-editable-target.oai-selected-target{outline:2px solid rgba(78,121,167,.58); outline-offset:3px;}
+body.editor-collapsed .oai-editable-target{cursor:default !important; outline:none !important;}
+@media (max-width:1380px){
+  body.editor-open .wrap{max-width:1480px; padding-right:24px;}
+  .oai-editor-panel{width:min(var(--oai-editor-width), calc(100vw - 24px)); right:12px; top:12px; height:calc(100vh - 24px);}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="hero-meta">
+      <span class="badge">獵才 AI 分案分析報告</span>
+      <span>日期：2026/04/06</span>
+      <span>資料來源：分析總表.xlsx、backtest_results.xlsx、規則檔</span>
+    </div>
+    <h1>獵才 AI 分案分析報告</h1>
+    <p><strong>初步結論：</strong>整體 143 筆可對回排名樣本中，Top5 命中率 66.4%，但 Top1 僅 21.7%，顯示目前主要問題不是完全找不到主管最後選的人，而是固定承接池內前位排序仍不夠強。未命中案件又高度集中在最高可用層級 P4，一部與二部的表現也明顯優於台中業務部，表示後續優化應聚焦 P4 區間排序、P1 多候選 tie-break 與少數承接偏移案例，而不是擴大候選池。</p>
+  </section>
+
+  <div class="top-tabs">
+    <button class="tab active" data-page="overview">總覽</button>
+    <button class="tab" data-page="pstruct">P1～P4 結構分析</button>
+    <button class="tab" data-page="miss">未命中案件分析</button>
+    <button class="tab" data-page="summary">總結（Issue & Action）</button>
+  </div>
+
+  <section class="page active" id="overview">
+    <div class="panel">
+      <h2 class="page-title">總覽</h2>
+      <div class="page-desc">此頁先回答目前模型的主問題：在固定承接池內，AI 到底是完全找錯人，還是其實已經找到方向，只是沒有把主管最後會選的人穩定推到前面。</div>
+      <div class="sub-tabs" data-section="overview">
+        <button class="subtab active" data-group="Total">Total</button>
+        <button class="subtab" data-group="業務一部＋業務二部">業務一部＋業務二部</button>
+        <button class="subtab" data-group="台中業務部">台中業務部</button>
+      </div>
+      <div id="overview-content"></div>
+    </div>
+  </section>
+
+  <section class="page" id="pstruct">
+    <div class="panel">
+      <h2 class="page-title">P1～P4 結構分析</h2>
+      <div class="page-desc">這一頁不是重新解釋 P1～P4 的文字定義，而是要驗證：當案件的最高可用層級是 P1 / P2 / P3 / P4 時，主管最後是否真的會選同層級顧問；若沒有，主管又最常改選到哪一層。</div>
+      <div class="sub-tabs" data-section="pstruct">
+        <button class="subtab active" data-group="Total">Total</button>
+        <button class="subtab" data-group="業務一部＋業務二部">業務一部＋業務二部</button>
+        <button class="subtab" data-group="台中業務部">台中業務部</button>
+      </div>
+      <div id="pstruct-content"></div>
+    </div>
+  </section>
+
+  <section class="page" id="miss">
+    <div class="panel">
+      <h2 class="page-title">未命中案件分析</h2>
+      <div class="page-desc">這一頁聚焦在「為什麼沒有命中」，並以族群適用的命中門檻來拆解未命中案件的共性，尤其是它們在最高可用層級與主管最後選擇上，有沒有穩定且可操作的模式。</div>
+      <div class="sub-tabs" data-section="miss">
+        <button class="subtab active" data-group="Total">Total</button>
+        <button class="subtab" data-group="業務一部＋業務二部">業務一部＋業務二部</button>
+        <button class="subtab" data-group="台中業務部">台中業務部</button>
+      </div>
+      <div id="miss-content"></div>
+    </div>
+  </section>
+
+  <section class="page" id="summary">
+    <div class="panel">
+      <h2 class="page-title">總結（Issue & Action）</h2>
+      <div class="page-desc">本頁把前面的觀察收斂成可執行的問題定義與後續調整方向，避免只停留在圖表描述。</div>
+      <div id="summary-content"></div>
+    </div>
+  </section>
+
+  <div class="footer-note">
+    說明：MRR / NDCG uplift 係依推薦池大小 6、8、11 的隨機基準計算相對提升幅度；台中業務部因未先拆科技／非科承接課，跨科指標不作正式判讀。
+  </div>
+</div>
+
+
+<div id="oaiEditorHandle" class="oai-editor-handle" title="切換展示 / 編輯模式">‹</div>
+<div id="oaiEditorPanel" class="oai-editor-panel">
+  <div class="oai-editor-head">
+    <div class="oai-editor-title">文案側欄編輯器</div>
+    <div class="oai-editor-sub">
+      右側直接改字，左側即時更新。展示時可用左側把手收合為展示模式。<br/>
+      此編輯器以文字敘事為主，不會同步改動圖表底層資料與明細彈窗。
+    </div>
+    <button id="oaiToggleDisplayBtn" class="oai-editor-btn secondary oai-toggle-display-btn" type="button">切換展示模式</button>
+    <div id="oaiEditorStatus" class="oai-editor-status">可直接在右側編輯欄位，或點左側文字快速定位。</div>
+  </div>
+  <div class="oai-editor-controls">
+    <button id="oaiSaveBtn" class="oai-editor-btn primary" type="button">儲存到瀏覽器</button>
+    <button id="oaiResetBtn" class="oai-editor-btn secondary" type="button">還原預設文字</button>
+    <button id="oaiExportBtn" class="oai-editor-btn secondary" type="button">匯出 JSON 文案</button>
+    <button id="oaiImportBtn" class="oai-editor-btn secondary" type="button">匯入 JSON 文案</button>
+    <input id="oaiImportInput" type="file" accept="application/json" style="display:none" />
+  </div>
+  <div class="oai-editor-body">
+    <div class="oai-editor-note">右側會顯示「全域內容 + 目前頁籤內容」。切換主分頁、子分頁或課別切換後，欄位會自動更新。</div>
+    <div id="oaiEditorFields"></div>
+  </div>
+</div>
+
+
+<div id="modal" class="modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal-dialog">
+    <div class="modal-head">
+      <h3 id="modal-title"></h3>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const OVERVIEW = {"Total": {"cards": [{"label": "總案件數", "value": "156", "sub": ""}, {"label": "可對回排名樣本", "value": "143", "sub": ""}, {"label": "跨科案件數（含%）", "value": "13（10.6%）", "sub": "母數=可判斷跨科樣本"}, {"label": "Top1 命中率", "value": "21.7%", "sub": ""}, {"label": "Top3 命中率", "value": "49.7%", "sub": ""}, {"label": "Top5 命中率", "value": "66.4%", "sub": ""}, {"label": "平均推薦池大小", "value": "8.1", "sub": ""}, {"label": "平均主管決策名次", "value": "4.02", "sub": ""}], "kpis": {"mrr": 0.4248196248196249, "ndcg": 0.5598987584652702, "rand_mrr": 0.3476993006993007, "rand_ndcg": 0.5001678321678322, "mrr_uplift": 0.2218017809216699, "ndcg_uplift": 0.11942176696680296}, "process_rows": [{"process": "業務一課", "cases": 44, "cross_n": 2, "cross_pct": 0.045454545454545456, "top1": 0.2619047619047619, "top3": 0.5, "top5": 0.6666666666666666, "avg_rank": 3.857142857142857, "avg_pool": 8.0, "mrr_uplift": 0.3594604508470054, "ndcg_uplift": 0.19093417862461703, "ranked_n": 42}, {"process": "業務三課", "cases": 37, "cross_n": 5, "cross_pct": 0.13513513513513514, "top1": 0.3125, "top3": 0.5625, "top5": 0.625, "avg_rank": 3.8125, "avg_pool": 8.0, "mrr_uplift": 0.43951330532212873, "ndcg_uplift": 0.23173392111648528, "ranked_n": 32}, {"process": "業務四課", "cases": 23, "cross_n": 5, "cross_pct": 0.21739130434782608, "top1": 0.21739130434782608, "top3": 0.5217391304347826, "top5": 0.7391304347826086, "avg_rank": 3.5652173913043477, "avg_pool": 6.0, "mrr_uplift": 0.058539357772094514, "ndcg_uplift": 0.0299016745216536, "ranked_n": 23}, {"process": "業務五課", "cases": 20, "cross_n": 0, "cross_pct": null, "top1": 0.14285714285714285, "top3": 0.5714285714285714, "top5": 0.5714285714285714, "avg_rank": 4.928571428571429, "avg_pool": 11.0, "mrr_uplift": 0.2726242011956297, "ndcg_uplift": 0.1422351785175644, "ranked_n": 14}, {"process": "業務二課", "cases": 19, "cross_n": 1, "cross_pct": 0.05263157894736842, "top1": 0.10526315789473684, "top3": 0.3684210526315789, "top5": 0.8421052631578947, "avg_rank": 3.789473684210526, "avg_pool": 6.0, "mrr_uplift": -0.13355693154454773, "ndcg_uplift": -0.07706515986784113, "ranked_n": 19}, {"process": "業務六課", "cases": 13, "cross_n": 0, "cross_pct": null, "top1": 0.07692307692307693, "top3": 0.38461538461538464, "top5": 0.46153846153846156, "avg_rank": 5.230769230769231, "avg_pool": 11.0, "mrr_uplift": 0.15373515373515412, "ndcg_uplift": 0.08297074467763998, "ranked_n": 13}], "summary_text": "此頁在回答的問題，是目前模型的瓶頸到底在『完全找錯人』，還是『已找到方向但前位排序不夠強』。"}, "業務一部＋業務二部": {"cards": [{"label": "總案件數", "value": "123", "sub": ""}, {"label": "可對回排名樣本", "value": "116", "sub": ""}, {"label": "跨科案件數（含%）", "value": "13（10.6%）", "sub": "母數=可判斷跨科樣本"}, {"label": "Top1 命中率", "value": "24.1%", "sub": ""}, {"label": "Top3 命中率", "value": "50.0%", "sub": ""}, {"label": "Top5 命中率", "value": "69.8%", "sub": ""}, {"label": "平均推薦池大小", "value": "7.3", "sub": ""}, {"label": "平均主管決策名次", "value": "3.78", "sub": ""}], "kpis": {"mrr": 0.44590517241379307, "ndcg": 0.5766801803937022, "rand_mrr": 0.36462068965517247, "rand_ndcg": 0.5146379310344827, "mrr_uplift": 0.2229288821637978, "ndcg_uplift": 0.12055514298082781}, "process_rows": [{"process": "業務一課", "cases": 44, "cross_n": 2, "cross_pct": 0.045454545454545456, "top1": 0.2619047619047619, "top3": 0.5, "top5": 0.6666666666666666, "avg_rank": 3.857142857142857, "avg_pool": 8.0, "mrr_uplift": 0.3594604508470054, "ndcg_uplift": 0.19093417862461703, "ranked_n": 42}, {"process": "業務三課", "cases": 37, "cross_n": 5, "cross_pct": 0.13513513513513514, "top1": 0.3125, "top3": 0.5625, "top5": 0.625, "avg_rank": 3.8125, "avg_pool": 8.0, "mrr_uplift": 0.43951330532212873, "ndcg_uplift": 0.23173392111648528, "ranked_n": 32}, {"process": "業務四課", "cases": 23, "cross_n": 5, "cross_pct": 0.21739130434782608, "top1": 0.21739130434782608, "top3": 0.5217391304347826, "top5": 0.7391304347826086, "avg_rank": 3.5652173913043477, "avg_pool": 6.0, "mrr_uplift": 0.058539357772094514, "ndcg_uplift": 0.0299016745216536, "ranked_n": 23}, {"process": "業務二課", "cases": 19, "cross_n": 1, "cross_pct": 0.05263157894736842, "top1": 0.10526315789473684, "top3": 0.3684210526315789, "top5": 0.8421052631578947, "avg_rank": 3.789473684210526, "avg_pool": 6.0, "mrr_uplift": -0.13355693154454773, "ndcg_uplift": -0.07706515986784113, "ranked_n": 19}], "summary_text": "此頁在回答的問題，是目前模型的瓶頸到底在『完全找錯人』，還是『已找到方向但前位排序不夠強』。"}, "台中業務部": {"cards": [{"label": "總案件數", "value": "33", "sub": ""}, {"label": "可對回排名樣本", "value": "27", "sub": ""}, {"label": "跨科案件數（含%）", "value": "—", "sub": "台中部不適用"}, {"label": "Top1 命中率", "value": "11.1%", "sub": ""}, {"label": "Top3 命中率", "value": "48.1%", "sub": ""}, {"label": "Top5 命中率", "value": "51.9%", "sub": ""}, {"label": "平均推薦池大小", "value": "11.0", "sub": ""}, {"label": "平均主管決策名次", "value": "5.07", "sub": ""}], "kpis": {"mrr": 0.3342298647854203, "ndcg": 0.48780079758756234, "rand_mrr": 0.2750000000000001, "rand_ndcg": 0.4380000000000001, "mrr_uplift": 0.21538132649243713, "ndcg_uplift": 0.11370045111315585}, "process_rows": [{"process": "業務五課", "cases": 20, "cross_n": 0, "cross_pct": null, "top1": 0.14285714285714285, "top3": 0.5714285714285714, "top5": 0.5714285714285714, "avg_rank": 4.928571428571429, "avg_pool": 11.0, "mrr_uplift": 0.2726242011956297, "ndcg_uplift": 0.1422351785175644, "ranked_n": 14}, {"process": "業務六課", "cases": 13, "cross_n": 0, "cross_pct": null, "top1": 0.07692307692307693, "top3": 0.38461538461538464, "top5": 0.46153846153846156, "avg_rank": 5.230769230769231, "avg_pool": 11.0, "mrr_uplift": 0.15373515373515412, "ndcg_uplift": 0.08297074467763998, "ranked_n": 13}], "summary_text": "此頁在回答的問題，是目前模型的瓶頸到底在『完全找錯人』，還是『已找到方向但前位排序不夠強』。"}};
+const PSTRUCT = {"Total": {"rows": [{"level": "P1", "cases": 43, "same_count": 19, "same_pct": 0.4418604651162791, "same_avg_rank": 1.7894736842105263, "top1_all": 0.2558139534883721, "top3_all": 0.4883720930232558, "top5_all": 0.7209302325581395, "same_top1": 0.5789473684210527, "same_top3": 0.8947368421052632, "mrr": 0.4600406053894427, "ndcg": 0.5878219270638333, "common_alt": "P4", "common_alt_pct": 0.5416666666666666, "common_alt_avg_rank": 6.0}, {"level": "P2", "cases": 14, "same_count": 5, "same_pct": 0.35714285714285715, "same_avg_rank": 1.2, "top1_all": 0.2857142857142857, "top3_all": 0.6428571428571429, "top5_all": 0.7857142857142857, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.48988095238095236, "ndcg": 0.6116745980438408, "common_alt": "P4", "common_alt_pct": 0.7777777777777778, "common_alt_avg_rank": 5.142857142857143}, {"level": "P3", "cases": 19, "same_count": 7, "same_pct": 0.3684210526315789, "same_avg_rank": 1.2857142857142858, "top1_all": 0.2631578947368421, "top3_all": 0.6842105263157895, "top5_all": 0.7894736842105263, "same_top1": 0.7142857142857143, "same_top3": 1.0, "mrr": 0.5260860484544695, "ndcg": 0.6405790940405611, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 4.25}, {"level": "P4", "cases": 67, "same_count": 67, "same_pct": 1.0, "same_avg_rank": 4.641791044776119, "top1_all": 0.16417910447761194, "top3_all": 0.417910447761194, "top5_all": 0.5671641791044776, "same_top1": 0.16417910447761194, "same_top3": 0.417910447761194, "mrr": 0.35990286661928456, "ndcg": 0.5082795886179754, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "p1_split": [{"bucket": "僅1位 P1", "cases": 25, "choose_p1_pct": 0.4, "top1": 0.4, "top3": 0.56, "avg_rank": 3.28}, {"bucket": "2位以上 P1", "cases": 18, "choose_p1_pct": 0.5, "top1": 0.05555555555555555, "top3": 0.3888888888888889, "avg_rank": 4.166666666666667}], "p1_compare": [{"name": "主管改選顧問", "avg_rank": 5.125, "avg_total_cases": 199.125, "avg_overall_rate": 0.2727436715509522, "avg_pr": 49.166666666666664, "avg_industry_rate": 0.1280232884399551, "avg_job_rate": 0.25688851104533034}, {"name": "AI 最佳 P1", "avg_rank": 1.0, "avg_total_cases": 219.20833333333334, "avg_overall_rate": 0.29120674418477865, "avg_pr": 57.5, "avg_industry_rate": 0.45022249355582683, "avg_job_rate": 0.32988723572281203}], "p1_not_adopt_case_n": 24, "p1_not_adopt_alt_dist": {"P4": 13, "P3": 9, "P2": 2}}, "業務一部＋業務二部": {"rows": [{"level": "P1", "cases": 34, "same_count": 14, "same_pct": 0.4117647058823529, "same_avg_rank": 1.8571428571428572, "top1_all": 0.2647058823529412, "top3_all": 0.4411764705882353, "top5_all": 0.7352941176470589, "same_top1": 0.6428571428571429, "same_top3": 0.8571428571428571, "mrr": 0.4583333333333333, "ndcg": 0.5867105964226225, "common_alt": "P3", "common_alt_pct": 0.45, "common_alt_avg_rank": 4.111111111111111}, {"level": "P2", "cases": 12, "same_count": 5, "same_pct": 0.4166666666666667, "same_avg_rank": 1.2, "top1_all": 0.3333333333333333, "top3_all": 0.5833333333333334, "top5_all": 0.75, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.5159722222222222, "ndcg": 0.6302870310511476, "common_alt": "P4", "common_alt_pct": 0.7142857142857143, "common_alt_avg_rank": 6.0}, {"level": "P3", "cases": 16, "same_count": 6, "same_pct": 0.375, "same_avg_rank": 1.3333333333333333, "top1_all": 0.25, "top3_all": 0.6875, "top5_all": 0.8125, "same_top1": 0.6666666666666666, "same_top3": 1.0, "mrr": 0.5240327380952381, "ndcg": 0.6399401898459514, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 4.0}, {"level": "P4", "cases": 54, "same_count": 54, "same_pct": 1.0, "same_avg_rank": 4.222222222222222, "top1_all": 0.2037037037037037, "top3_all": 0.46296296296296297, "top5_all": 0.6296296296296297, "same_top1": 0.2037037037037037, "same_top3": 0.46296296296296297, "mrr": 0.3993606701940035, "ndcg": 0.5397083932805794, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "p1_split": [{"bucket": "僅1位 P1", "cases": 20, "choose_p1_pct": 0.4, "top1": 0.4, "top3": 0.55, "avg_rank": 3.05}, {"bucket": "2位以上 P1", "cases": 14, "choose_p1_pct": 0.42857142857142855, "top1": 0.07142857142857142, "top3": 0.2857142857142857, "avg_rank": 4.285714285714286}], "p1_compare": [{"name": "主管改選顧問", "avg_rank": 4.75, "avg_total_cases": 203.05, "avg_overall_rate": 0.28161068861465854, "avg_pr": 51.0, "avg_industry_rate": 0.12862794612794615, "avg_job_rate": 0.2602639612475678}, {"name": "AI 最佳 P1", "avg_rank": 1.0, "avg_total_cases": 226.65, "avg_overall_rate": 0.29408891448307317, "avg_pr": 57.0, "avg_industry_rate": 0.491205636955637, "avg_job_rate": 0.3366405605077331}], "p1_not_adopt_case_n": 20, "p1_not_adopt_alt_dist": {"P3": 9, "P4": 9, "P2": 2}}, "台中業務部": {"rows": [{"level": "P1", "cases": 9, "same_count": 5, "same_pct": 0.5555555555555556, "same_avg_rank": 1.6, "top1_all": 0.2222222222222222, "top3_all": 0.6666666666666666, "top5_all": 0.6666666666666666, "same_top1": 0.4, "same_top3": 1.0, "mrr": 0.4664902998236331, "ndcg": 0.592020287263963, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 7.0}, {"level": "P2", "cases": 2, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 1.0, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.3333333333333333, "ndcg": 0.5, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 3.0}, {"level": "P3", "cases": 3, "same_count": 1, "same_pct": 0.3333333333333333, "same_avg_rank": 1.0, "top1_all": 0.3333333333333333, "top3_all": 0.6666666666666666, "top5_all": 0.6666666666666666, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.5370370370370371, "ndcg": 0.6439865830784796, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 5.5}, {"level": "P4", "cases": 13, "same_count": 13, "same_pct": 1.0, "same_avg_rank": 6.384615384615385, "top1_all": 0.0, "top3_all": 0.23076923076923078, "top5_all": 0.3076923076923077, "same_top1": 0.0, "same_top3": 0.23076923076923078, "mrr": 0.19600122100122103, "ndcg": 0.3777291692502367, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "p1_split": [{"bucket": "僅1位 P1", "cases": 5, "choose_p1_pct": 0.4, "top1": 0.4, "top3": 0.6, "avg_rank": 4.2}, {"bucket": "2位以上 P1", "cases": 4, "choose_p1_pct": 0.75, "top1": 0.0, "top3": 0.75, "avg_rank": 3.75}], "p1_compare": [{"name": "主管改選顧問", "avg_rank": 7.0, "avg_total_cases": 179.5, "avg_overall_rate": 0.22840858623242044, "avg_pr": 40.0, "avg_industry_rate": 0.125, "avg_job_rate": 0.24001126003414328}, {"name": "AI 最佳 P1", "avg_rank": 1.0, "avg_total_cases": 182.0, "avg_overall_rate": 0.2767958926933063, "avg_pr": 60.0, "avg_industry_rate": 0.24530677655677657, "avg_job_rate": 0.2961206117982065}], "p1_not_adopt_case_n": 4, "p1_not_adopt_alt_dist": {"P4": 4}}};
+const PSTRUCT_TABLE_SWITCH = {"Total": {"全部": [{"level": "P1", "cases": 45, "same_count": 19, "same_pct": 0.4222222222222222, "same_avg_rank": 1.7894736842105263, "top1_all": 0.24444444444444444, "top3_all": 0.4666666666666667, "top5_all": 0.6888888888888889, "same_top1": 0.5789473684210527, "same_top3": 0.8947368421052632, "mrr": 0.4600406053894426, "ndcg": 0.5878219270638333, "common_alt": "P4", "common_alt_pct": 0.5416666666666666, "common_alt_avg_rank": 6.0}, {"level": "P2", "cases": 15, "same_count": 5, "same_pct": 0.3333333333333333, "same_avg_rank": 1.2, "top1_all": 0.26666666666666666, "top3_all": 0.6, "top5_all": 0.7333333333333333, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.48988095238095236, "ndcg": 0.6116745980438408, "common_alt": "P4", "common_alt_pct": 0.7777777777777778, "common_alt_avg_rank": 5.142857142857143}, {"level": "P3", "cases": 19, "same_count": 7, "same_pct": 0.3684210526315789, "same_avg_rank": 1.2857142857142858, "top1_all": 0.2631578947368421, "top3_all": 0.6842105263157895, "top5_all": 0.7894736842105263, "same_top1": 0.7142857142857143, "same_top3": 1.0, "mrr": 0.5260860484544695, "ndcg": 0.6405790940405611, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 4.25}, {"level": "P4", "cases": 76, "same_count": 67, "same_pct": 0.881578947368421, "same_avg_rank": 4.641791044776119, "top1_all": 0.14473684210526316, "top3_all": 0.3684210526315789, "top5_all": 0.5, "same_top1": 0.16417910447761194, "same_top3": 0.417910447761194, "mrr": 0.35990286661928456, "ndcg": 0.5082795886179755, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務一課": [{"level": "P1", "cases": 8, "same_count": 5, "same_pct": 0.625, "same_avg_rank": 1.4, "top1_all": 0.375, "top3_all": 0.75, "top5_all": 1.0, "same_top1": 0.6, "same_top3": 1.0, "mrr": 0.625, "ndcg": 0.7192677971076449, "common_alt": "P3", "common_alt_pct": 0.6666666666666666, "common_alt_avg_rank": 3.0}, {"level": "P2", "cases": 7, "same_count": 5, "same_pct": 0.7142857142857143, "same_avg_rank": 1.2, "top1_all": 0.5714285714285714, "top3_all": 0.7142857142857143, "top5_all": 0.7142857142857143, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.6845238095238094, "ndcg": 0.7575145453521727, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 7.0}, {"level": "P3", "cases": 5, "same_count": 1, "same_pct": 0.2, "same_avg_rank": 1.0, "top1_all": 0.2, "top3_all": 0.4, "top5_all": 0.6, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.4035714285714286, "ndcg": 0.5420809043527826, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 5.25}, {"level": "P4", "cases": 23, "same_count": 22, "same_pct": 0.9565217391304348, "same_avg_rank": 4.681818181818182, "top1_all": 0.13043478260869565, "top3_all": 0.34782608695652173, "top5_all": 0.5217391304347826, "same_top1": 0.13636363636363635, "same_top3": 0.36363636363636365, "mrr": 0.3456168831168831, "ndcg": 0.49737971009151244, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務二課": [{"level": "P1", "cases": 8, "same_count": 3, "same_pct": 0.375, "same_avg_rank": 3.6666666666666665, "top1_all": 0.125, "top3_all": 0.125, "top5_all": 0.75, "same_top1": 0.3333333333333333, "same_top3": 0.3333333333333333, "mrr": 0.2979166666666667, "ndcg": 0.4613127701534505, "common_alt": "P4", "common_alt_pct": 0.6, "common_alt_avg_rank": 5.0}, {"level": "P2", "cases": 0, "same_count": 0, "same_pct": null, "same_avg_rank": null, "top1_all": null, "top3_all": null, "top5_all": null, "same_top1": null, "same_top3": null, "mrr": null, "ndcg": null, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}, {"level": "P3", "cases": 2, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 1.0, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.5, "ndcg": 0.6309297535714575, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 2.0}, {"level": "P4", "cases": 9, "same_count": 9, "same_pct": 1.0, "same_avg_rank": 3.4444444444444446, "top1_all": 0.1111111111111111, "top3_all": 0.4444444444444444, "top5_all": 0.8888888888888888, "same_top1": 0.1111111111111111, "same_top3": 0.4444444444444444, "mrr": 0.37037037037037035, "ndcg": 0.5233159081081169, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務三課": [{"level": "P1", "cases": 11, "same_count": 5, "same_pct": 0.45454545454545453, "same_avg_rank": 1.4, "top1_all": 0.36363636363636365, "top3_all": 0.6363636363636364, "top5_all": 0.7272727272727273, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.5866666666666667, "ndcg": 0.6861126688593501, "common_alt": "P4", "common_alt_pct": 0.6, "common_alt_avg_rank": 5.666666666666667}, {"level": "P2", "cases": 3, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.3333333333333333, "top5_all": 0.6666666666666666, "same_top1": null, "same_top3": null, "mrr": 0.2333333333333333, "ndcg": 0.41435333144752123, "common_alt": "P4", "common_alt_pct": 0.6666666666666666, "common_alt_avg_rank": 5.5}, {"level": "P3", "cases": 5, "same_count": 3, "same_pct": 0.6, "same_avg_rank": 1.3333333333333333, "top1_all": 0.4, "top3_all": 0.8, "top5_all": 0.8, "same_top1": 0.6666666666666666, "same_top3": 1.0, "mrr": 0.6333333333333334, "ndcg": 0.7236133388501875, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 4.0}, {"level": "P4", "cases": 18, "same_count": 14, "same_pct": 0.7777777777777778, "same_avg_rank": 4.857142857142857, "top1_all": 0.2222222222222222, "top3_all": 0.3333333333333333, "top5_all": 0.3333333333333333, "same_top1": 0.2857142857142857, "same_top3": 0.42857142857142855, "mrr": 0.42346938775510207, "ndcg": 0.5534997462730281, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務四課": [{"level": "P1", "cases": 8, "same_count": 1, "same_pct": 0.125, "same_avg_rank": 1.0, "top1_all": 0.125, "top3_all": 0.125, "top5_all": 0.375, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.2916666666666667, "ndcg": 0.45529863146086214, "common_alt": "P3", "common_alt_pct": 0.42857142857142855, "common_alt_avg_rank": 5.333333333333333}, {"level": "P2", "cases": 2, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.5, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.35, "ndcg": 0.5088912804029996, "common_alt": "P4", "common_alt_pct": 0.5, "common_alt_avg_rank": 5.0}, {"level": "P3", "cases": 4, "same_count": 2, "same_pct": 0.5, "same_avg_rank": 1.5, "top1_all": 0.25, "top3_all": 0.75, "top5_all": 1.0, "same_top1": 0.5, "same_top3": 1.0, "mrr": 0.55, "ndcg": 0.6621780785943642, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 3.5}, {"level": "P4", "cases": 9, "same_count": 9, "same_pct": 1.0, "same_avg_rank": 2.888888888888889, "top1_all": 0.3333333333333333, "top3_all": 0.7777777777777778, "top5_all": 0.8888888888888888, "same_top1": 0.3333333333333333, "same_top3": 0.7777777777777778, "mrr": 0.5222222222222221, "ndcg": 0.6381177771491737, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務五課": [{"level": "P1", "cases": 6, "same_count": 2, "same_pct": 0.3333333333333333, "same_avg_rank": 1.0, "top1_all": 0.3333333333333333, "top3_all": 0.5, "top5_all": 0.5, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.5174603174603175, "ndcg": 0.6268726657994629, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 6.333333333333333}, {"level": "P2", "cases": 3, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.6666666666666666, "top5_all": 0.6666666666666666, "same_top1": null, "same_top3": null, "mrr": 0.3333333333333333, "ndcg": 0.5, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 3.0}, {"level": "P3", "cases": 1, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 1.0, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.5, "ndcg": 0.6309297535714575, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 2.0}, {"level": "P4", "cases": 10, "same_count": 6, "same_pct": 0.6, "same_avg_rank": 6.666666666666667, "top1_all": 0.0, "top3_all": 0.2, "top5_all": 0.2, "same_top1": 0.0, "same_top3": 0.3333333333333333, "mrr": 0.19093915343915344, "ndcg": 0.37314883868348847, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務六課": [{"level": "P1", "cases": 4, "same_count": 3, "same_pct": 0.75, "same_avg_rank": 2.0, "top1_all": 0.0, "top3_all": 0.75, "top5_all": 0.75, "same_top1": 0.0, "same_top3": 1.0, "mrr": 0.4027777777777778, "ndcg": 0.5484548140945884, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 9.0}, {"level": "P2", "cases": 0, "same_count": 0, "same_pct": null, "same_avg_rank": null, "top1_all": null, "top3_all": null, "top5_all": null, "same_top1": null, "same_top3": null, "mrr": null, "ndcg": null, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}, {"level": "P3", "cases": 2, "same_count": 1, "same_pct": 0.5, "same_avg_rank": 1.0, "top1_all": 0.5, "top3_all": 0.5, "top5_all": 0.5, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.5555555555555556, "ndcg": 0.6505149978319906, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 9.0}, {"level": "P4", "cases": 7, "same_count": 7, "same_pct": 1.0, "same_avg_rank": 6.142857142857143, "top1_all": 0.0, "top3_all": 0.14285714285714285, "top5_all": 0.2857142857142857, "same_top1": 0.0, "same_top3": 0.14285714285714285, "mrr": 0.20034013605442175, "ndcg": 0.38165516687887796, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}]}, "業務一部＋業務二部": {"全部": [{"level": "P1", "cases": 35, "same_count": 14, "same_pct": 0.4, "same_avg_rank": 1.8571428571428572, "top1_all": 0.2571428571428571, "top3_all": 0.42857142857142855, "top5_all": 0.7142857142857143, "same_top1": 0.6428571428571429, "same_top3": 0.8571428571428571, "mrr": 0.4583333333333333, "ndcg": 0.5867105964226225, "common_alt": "P3", "common_alt_pct": 0.45, "common_alt_avg_rank": 4.111111111111111}, {"level": "P2", "cases": 12, "same_count": 5, "same_pct": 0.4166666666666667, "same_avg_rank": 1.2, "top1_all": 0.3333333333333333, "top3_all": 0.5833333333333334, "top5_all": 0.75, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.5159722222222222, "ndcg": 0.6302870310511476, "common_alt": "P4", "common_alt_pct": 0.7142857142857143, "common_alt_avg_rank": 6.0}, {"level": "P3", "cases": 16, "same_count": 6, "same_pct": 0.375, "same_avg_rank": 1.3333333333333333, "top1_all": 0.25, "top3_all": 0.6875, "top5_all": 0.8125, "same_top1": 0.6666666666666666, "same_top3": 1.0, "mrr": 0.5240327380952381, "ndcg": 0.6399401898459514, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 4.0}, {"level": "P4", "cases": 59, "same_count": 54, "same_pct": 0.9152542372881356, "same_avg_rank": 4.222222222222222, "top1_all": 0.1864406779661017, "top3_all": 0.423728813559322, "top5_all": 0.576271186440678, "same_top1": 0.2037037037037037, "same_top3": 0.46296296296296297, "mrr": 0.39936067019400345, "ndcg": 0.5397083932805793, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務一課": [{"level": "P1", "cases": 8, "same_count": 5, "same_pct": 0.625, "same_avg_rank": 1.4, "top1_all": 0.375, "top3_all": 0.75, "top5_all": 1.0, "same_top1": 0.6, "same_top3": 1.0, "mrr": 0.625, "ndcg": 0.7192677971076449, "common_alt": "P3", "common_alt_pct": 0.6666666666666666, "common_alt_avg_rank": 3.0}, {"level": "P2", "cases": 7, "same_count": 5, "same_pct": 0.7142857142857143, "same_avg_rank": 1.2, "top1_all": 0.5714285714285714, "top3_all": 0.7142857142857143, "top5_all": 0.7142857142857143, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.6845238095238094, "ndcg": 0.7575145453521727, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 7.0}, {"level": "P3", "cases": 5, "same_count": 1, "same_pct": 0.2, "same_avg_rank": 1.0, "top1_all": 0.2, "top3_all": 0.4, "top5_all": 0.6, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.4035714285714286, "ndcg": 0.5420809043527826, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 5.25}, {"level": "P4", "cases": 23, "same_count": 22, "same_pct": 0.9565217391304348, "same_avg_rank": 4.681818181818182, "top1_all": 0.13043478260869565, "top3_all": 0.34782608695652173, "top5_all": 0.5217391304347826, "same_top1": 0.13636363636363635, "same_top3": 0.36363636363636365, "mrr": 0.3456168831168831, "ndcg": 0.49737971009151244, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務二課": [{"level": "P1", "cases": 8, "same_count": 3, "same_pct": 0.375, "same_avg_rank": 3.6666666666666665, "top1_all": 0.125, "top3_all": 0.125, "top5_all": 0.75, "same_top1": 0.3333333333333333, "same_top3": 0.3333333333333333, "mrr": 0.2979166666666667, "ndcg": 0.4613127701534505, "common_alt": "P4", "common_alt_pct": 0.6, "common_alt_avg_rank": 5.0}, {"level": "P2", "cases": 0, "same_count": 0, "same_pct": null, "same_avg_rank": null, "top1_all": null, "top3_all": null, "top5_all": null, "same_top1": null, "same_top3": null, "mrr": null, "ndcg": null, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}, {"level": "P3", "cases": 2, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 1.0, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.5, "ndcg": 0.6309297535714575, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 2.0}, {"level": "P4", "cases": 9, "same_count": 9, "same_pct": 1.0, "same_avg_rank": 3.4444444444444446, "top1_all": 0.1111111111111111, "top3_all": 0.4444444444444444, "top5_all": 0.8888888888888888, "same_top1": 0.1111111111111111, "same_top3": 0.4444444444444444, "mrr": 0.37037037037037035, "ndcg": 0.5233159081081169, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務三課": [{"level": "P1", "cases": 11, "same_count": 5, "same_pct": 0.45454545454545453, "same_avg_rank": 1.4, "top1_all": 0.36363636363636365, "top3_all": 0.6363636363636364, "top5_all": 0.7272727272727273, "same_top1": 0.8, "same_top3": 1.0, "mrr": 0.5866666666666667, "ndcg": 0.6861126688593501, "common_alt": "P4", "common_alt_pct": 0.6, "common_alt_avg_rank": 5.666666666666667}, {"level": "P2", "cases": 3, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.3333333333333333, "top5_all": 0.6666666666666666, "same_top1": null, "same_top3": null, "mrr": 0.2333333333333333, "ndcg": 0.41435333144752123, "common_alt": "P4", "common_alt_pct": 0.6666666666666666, "common_alt_avg_rank": 5.5}, {"level": "P3", "cases": 5, "same_count": 3, "same_pct": 0.6, "same_avg_rank": 1.3333333333333333, "top1_all": 0.4, "top3_all": 0.8, "top5_all": 0.8, "same_top1": 0.6666666666666666, "same_top3": 1.0, "mrr": 0.6333333333333334, "ndcg": 0.7236133388501875, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 4.0}, {"level": "P4", "cases": 18, "same_count": 14, "same_pct": 0.7777777777777778, "same_avg_rank": 4.857142857142857, "top1_all": 0.2222222222222222, "top3_all": 0.3333333333333333, "top5_all": 0.3333333333333333, "same_top1": 0.2857142857142857, "same_top3": 0.42857142857142855, "mrr": 0.42346938775510207, "ndcg": 0.5534997462730281, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務四課": [{"level": "P1", "cases": 8, "same_count": 1, "same_pct": 0.125, "same_avg_rank": 1.0, "top1_all": 0.125, "top3_all": 0.125, "top5_all": 0.375, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.2916666666666667, "ndcg": 0.45529863146086214, "common_alt": "P3", "common_alt_pct": 0.42857142857142855, "common_alt_avg_rank": 5.333333333333333}, {"level": "P2", "cases": 2, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.5, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.35, "ndcg": 0.5088912804029996, "common_alt": "P4", "common_alt_pct": 0.5, "common_alt_avg_rank": 5.0}, {"level": "P3", "cases": 4, "same_count": 2, "same_pct": 0.5, "same_avg_rank": 1.5, "top1_all": 0.25, "top3_all": 0.75, "top5_all": 1.0, "same_top1": 0.5, "same_top3": 1.0, "mrr": 0.55, "ndcg": 0.6621780785943642, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 3.5}, {"level": "P4", "cases": 9, "same_count": 9, "same_pct": 1.0, "same_avg_rank": 2.888888888888889, "top1_all": 0.3333333333333333, "top3_all": 0.7777777777777778, "top5_all": 0.8888888888888888, "same_top1": 0.3333333333333333, "same_top3": 0.7777777777777778, "mrr": 0.5222222222222221, "ndcg": 0.6381177771491737, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}]}, "台中業務部": {"全部": [{"level": "P1", "cases": 10, "same_count": 5, "same_pct": 0.5, "same_avg_rank": 1.6, "top1_all": 0.2, "top3_all": 0.6, "top5_all": 0.6, "same_top1": 0.4, "same_top3": 1.0, "mrr": 0.4664902998236331, "ndcg": 0.592020287263963, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 7.0}, {"level": "P2", "cases": 3, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.6666666666666666, "top5_all": 0.6666666666666666, "same_top1": null, "same_top3": null, "mrr": 0.3333333333333333, "ndcg": 0.5, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 3.0}, {"level": "P3", "cases": 3, "same_count": 1, "same_pct": 0.3333333333333333, "same_avg_rank": 1.0, "top1_all": 0.3333333333333333, "top3_all": 0.6666666666666666, "top5_all": 0.6666666666666666, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.5370370370370371, "ndcg": 0.6439865830784796, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 5.5}, {"level": "P4", "cases": 17, "same_count": 13, "same_pct": 0.7647058823529411, "same_avg_rank": 6.384615384615385, "top1_all": 0.0, "top3_all": 0.17647058823529413, "top5_all": 0.23529411764705882, "same_top1": 0.0, "same_top3": 0.23076923076923078, "mrr": 0.196001221001221, "ndcg": 0.3777291692502366, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務五課": [{"level": "P1", "cases": 6, "same_count": 2, "same_pct": 0.3333333333333333, "same_avg_rank": 1.0, "top1_all": 0.3333333333333333, "top3_all": 0.5, "top5_all": 0.5, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.5174603174603175, "ndcg": 0.6268726657994629, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 6.333333333333333}, {"level": "P2", "cases": 3, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 0.6666666666666666, "top5_all": 0.6666666666666666, "same_top1": null, "same_top3": null, "mrr": 0.3333333333333333, "ndcg": 0.5, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 3.0}, {"level": "P3", "cases": 1, "same_count": 0, "same_pct": 0.0, "same_avg_rank": null, "top1_all": 0.0, "top3_all": 1.0, "top5_all": 1.0, "same_top1": null, "same_top3": null, "mrr": 0.5, "ndcg": 0.6309297535714575, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 2.0}, {"level": "P4", "cases": 10, "same_count": 6, "same_pct": 0.6, "same_avg_rank": 6.666666666666667, "top1_all": 0.0, "top3_all": 0.2, "top5_all": 0.2, "same_top1": 0.0, "same_top3": 0.3333333333333333, "mrr": 0.19093915343915344, "ndcg": 0.37314883868348847, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}], "業務六課": [{"level": "P1", "cases": 4, "same_count": 3, "same_pct": 0.75, "same_avg_rank": 2.0, "top1_all": 0.0, "top3_all": 0.75, "top5_all": 0.75, "same_top1": 0.0, "same_top3": 1.0, "mrr": 0.4027777777777778, "ndcg": 0.5484548140945884, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 9.0}, {"level": "P2", "cases": 0, "same_count": 0, "same_pct": null, "same_avg_rank": null, "top1_all": null, "top3_all": null, "top5_all": null, "same_top1": null, "same_top3": null, "mrr": null, "ndcg": null, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}, {"level": "P3", "cases": 2, "same_count": 1, "same_pct": 0.5, "same_avg_rank": 1.0, "top1_all": 0.5, "top3_all": 0.5, "top5_all": 0.5, "same_top1": 1.0, "same_top3": 1.0, "mrr": 0.5555555555555556, "ndcg": 0.6505149978319906, "common_alt": "P4", "common_alt_pct": 1.0, "common_alt_avg_rank": 9.0}, {"level": "P4", "cases": 7, "same_count": 7, "same_pct": 1.0, "same_avg_rank": 6.142857142857143, "top1_all": 0.0, "top3_all": 0.14285714285714285, "top5_all": 0.2857142857142857, "same_top1": 0.0, "same_top3": 0.14285714285714285, "mrr": 0.20034013605442175, "ndcg": 0.38165516687887796, "common_alt": null, "common_alt_pct": null, "common_alt_avg_rank": null}]}};
+
+const MISS = {"Total": {"threshold": "Top5", "cards": [{"label": "命中率", "value": "66.4%", "sub": "以 Top5 為界"}, {"label": "未命中率", "value": "33.6%", "sub": "以 Top5 為界"}, {"label": "未命中案件數", "value": "48", "sub": ""}, {"label": "未命中平均主管決策名次", "value": "7.06", "sub": ""}, {"label": "未命中案件中最高可用層級=P4", "value": "60.4%", "sub": ""}, {"label": "未命中案件中主管最後選 P4", "value": "93.8%", "sub": ""}], "miss_high": [{"level": "P1", "pct": 0.25}, {"level": "P2", "pct": 0.0625}, {"level": "P3", "pct": 0.08333333333333333}, {"level": "P4", "pct": 0.6041666666666666}], "hit_high": [{"level": "P1", "pct": 0.3263157894736842}, {"level": "P2", "pct": 0.11578947368421053}, {"level": "P3", "pct": 0.15789473684210525}, {"level": "P4", "pct": 0.4}], "miss_choice": [{"level": "P1", "pct": 0.0}, {"level": "P2", "pct": 0.0}, {"level": "P3", "pct": 0.0625}, {"level": "P4", "pct": 0.9375}], "miss_cross_pct": 0.0, "hit_cross_pct": 0.12631578947368421, "examples": [[370, "汽車及其零件製造業", "生產管理類人員|品保 / 品管類人員", "業務五課", "洪士雅", "非科", 10.0, "P4", "P4"], [153, "其他電子零組件相關業", "軟體 / 工程類人員", "業務六課", "林均奕", "科技", 9.0, "P4", "P1"], [230, "其他食品製造業", "人力資源類人員", "業務六課", "楊仁豪", "非科", 9.0, "P4", "P3"], [240, "其他餐飲業", "財務 / 會計 / 稅務類", "業務五課", "林均奕", "非科", 9.0, "P4", "P4"], [384, "家用電器製造業", "業務銷售類人員", "業務五課", "林均奕", "非科", 9.0, "P4", "P1"], [9, "藥品╱化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P2"], [15, "汽車及其零件製造業", "品保 / 品管類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [53, "家庭電器／設備及用品批發業", "設計類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [57, "醫院", "醫療保健服務人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [73, "餐館業", "生產管理類人員|財務 / 會計 / 稅務類", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [89, "醫療器材製造業", "工程研發類人員|業務銷售類人員", "業務五課", "李凱強", "非科", 8.0, "P4", "P4"], [214, "藥品／化妝品及清潔用品零售業", "專案 / 產品管理類人員|生技 / 醫療研發類人員", "業務一課", "張毓君", "非科", 8.0, "P4", "P4"], [308, "人身保險業", "經營 / 幕僚類人員", "業務一課", "—", "非科", 8.0, "P4", "P3"], [344, "農事及畜牧服務業", "餐飲類人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [352, "首飾及貴金屬零售業", "門市營業類人員", "業務三課", "—", "非科", 8.0, "P4", "P4"], [362, "加工紙製造業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [376, "食品什貨零售業", "門市營業類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [11, "其他教育服務業", "—", "業務三課", "許玟芳", "非科", 7.0, "P4", "P4"], [13, "寵物相關服務業", "軟體 / 工程類人員", "業務六課", "蔡俊男", "非科", 7.0, "P4", "P4"], [33, "建材／傢俱批發業", "業務銷售類人員", "業務三課", "吳灃展", "非科", 7.0, "P4", "P4"]]}, "業務一部＋業務二部": {"threshold": "Top3", "cards": [{"label": "命中率", "value": "50.0%", "sub": "以 Top3 為界"}, {"label": "未命中率", "value": "50.0%", "sub": "以 Top3 為界"}, {"label": "未命中案件數", "value": "58", "sub": ""}, {"label": "未命中平均主管決策名次", "value": "5.86", "sub": ""}, {"label": "未命中案件中最高可用層級=P4", "value": "50.0%", "sub": ""}, {"label": "未命中案件中主管最後選 P4", "value": "82.8%", "sub": ""}], "miss_high": [{"level": "P1", "pct": 0.3275862068965517}, {"level": "P2", "pct": 0.08620689655172414}, {"level": "P3", "pct": 0.08620689655172414}, {"level": "P4", "pct": 0.5}], "hit_high": [{"level": "P1", "pct": 0.25862068965517243}, {"level": "P2", "pct": 0.1206896551724138}, {"level": "P3", "pct": 0.1896551724137931}, {"level": "P4", "pct": 0.43103448275862066}], "miss_choice": [{"level": "P1", "pct": 0.034482758620689655}, {"level": "P2", "pct": 0.034482758620689655}, {"level": "P3", "pct": 0.10344827586206896}, {"level": "P4", "pct": 0.8275862068965517}], "miss_cross_pct": 0.017241379310344827, "hit_cross_pct": 0.1896551724137931, "examples": [[9, "藥品╱化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P2"], [15, "汽車及其零件製造業", "品保 / 品管類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [53, "家庭電器／設備及用品批發業", "設計類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [73, "餐館業", "生產管理類人員|財務 / 會計 / 稅務類", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [214, "藥品／化妝品及清潔用品零售業", "專案 / 產品管理類人員|生技 / 醫療研發類人員", "業務一課", "張毓君", "非科", 8.0, "P4", "P4"], [308, "人身保險業", "經營 / 幕僚類人員", "業務一課", "—", "非科", 8.0, "P4", "P3"], [352, "首飾及貴金屬零售業", "門市營業類人員", "業務三課", "—", "非科", 8.0, "P4", "P4"], [362, "加工紙製造業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [376, "食品什貨零售業", "門市營業類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [11, "其他教育服務業", "—", "業務三課", "許玟芳", "非科", 7.0, "P4", "P4"], [33, "建材／傢俱批發業", "業務銷售類人員", "業務三課", "吳灃展", "非科", 7.0, "P4", "P4"], [61, "自動控制相關業", "生產管理類人員|經營 / 幕僚類人員|業務銷售類人員", "業務三課", "許玟芳", "非科", 7.0, "P4", "P4"], [119, "工商顧問服務業", "財務 / 會計 / 稅務類|設計類人員|行銷類人員|人力資源類人員|法務 / 智財類人員", "業務一課", "彭莉雰", "非科", 7.0, "P4", "P4"], [129, "電力供應業", "經營 / 幕僚類人員", "業務一課", "潘弘哲", "非科", 7.0, "P4", "P4"], [186, "其他金屬相關製造業", "業務銷售類人員", "業務一課", "張毓君", "非科", 7.0, "P4", "P3"], [328, "空調水機電工程業", "設計類人員", "業務一課", "潘弘哲", "非科", 7.0, "P4", "P4"], [29, "建築工程業", "採購 / 資材 / 倉管類人員", "業務一課", "潘弘哲", "非科", 6.0, "P4", "P4"], [81, "建築工程業", "營建施作類人員|營建規劃類人員", "業務一課", "潘弘哲", "非科", 6.0, "P4", "P4"], [85, "其他電子零組件相關業", "業務銷售類人員", "業務四課", "劉宸希", "科技", 6.0, "P3", "P1"], [101, "化學原料製造業", "專案 / 產品管理類人員", "業務一課", "張正瑾", "非科", 6.0, "P4", "P2"]]}, "台中業務部": {"threshold": "Top5", "cards": [{"label": "命中率", "value": "51.9%", "sub": "以 Top5 為界"}, {"label": "未命中率", "value": "48.1%", "sub": "以 Top5 為界"}, {"label": "未命中案件數", "value": "13", "sub": ""}, {"label": "未命中平均主管決策名次", "value": "8.00", "sub": ""}, {"label": "未命中案件中最高可用層級=P4", "value": "69.2%", "sub": ""}, {"label": "未命中案件中主管最後選 P4", "value": "100.0%", "sub": ""}], "miss_high": [{"level": "P1", "pct": 0.23076923076923078}, {"level": "P2", "pct": 0.0}, {"level": "P3", "pct": 0.07692307692307693}, {"level": "P4", "pct": 0.6923076923076923}], "hit_high": [{"level": "P1", "pct": 0.42857142857142855}, {"level": "P2", "pct": 0.14285714285714285}, {"level": "P3", "pct": 0.14285714285714285}, {"level": "P4", "pct": 0.2857142857142857}], "miss_choice": [{"level": "P1", "pct": 0.0}, {"level": "P2", "pct": 0.0}, {"level": "P3", "pct": 0.0}, {"level": "P4", "pct": 1.0}], "miss_cross_pct": null, "hit_cross_pct": null, "examples": [[370, "汽車及其零件製造業", "生產管理類人員|品保 / 品管類人員", "業務五課", "洪士雅", "非科", 10.0, "P4", "P4"], [153, "其他電子零組件相關業", "軟體 / 工程類人員", "業務六課", "林均奕", "科技", 9.0, "P4", "P1"], [230, "其他食品製造業", "人力資源類人員", "業務六課", "楊仁豪", "非科", 9.0, "P4", "P3"], [240, "其他餐飲業", "財務 / 會計 / 稅務類", "業務五課", "林均奕", "非科", 9.0, "P4", "P4"], [384, "家用電器製造業", "業務銷售類人員", "業務五課", "林均奕", "非科", 9.0, "P4", "P1"], [57, "醫院", "醫療保健服務人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [89, "醫療器材製造業", "工程研發類人員|業務銷售類人員", "業務五課", "李凱強", "非科", 8.0, "P4", "P4"], [344, "農事及畜牧服務業", "餐飲類人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [13, "寵物相關服務業", "軟體 / 工程類人員", "業務六課", "蔡俊男", "非科", 7.0, "P4", "P4"], [43, "其他食品製造業", "生產管理類人員", "業務五課", "許家瑜", "非科", 7.0, "P4", "P1"], [99, "自動控制相關業", "經營 / 幕僚類人員|工程研發類人員|人力資源類人員", "業務六課", "蔡俊男", "非科", 7.0, "P4", "P4"], [272, "其他商品批發業", "專案 / 產品管理類人員", "業務五課", "洪士雅", "非科", 7.0, "P4", "P4"], [168, "餐館業", "餐飲類人員", "業務六課", "楊仁豪", "非科", 6.0, "P4", "P4"]]}};
+const DETAIL_TABLES = {"overview-Total-process": {"title": "Total｜by process_ug_name 指標明細", "columns": ["課別", "案件數", "跨科案件數", "跨科比例", "Top1", "Top3", "Top5", "平均主管決策名次", "平均推薦池大小", "MRR", "隨機MRR基準", "MRR uplift", "NDCG", "隨機NDCG基準", "NDCG uplift"], "rows": [["業務一課", 44, 2, "15.4%", "26.2%", "50.0%", "66.7%", "3.86", "8.0", "0.462", "0.340", "↑+35.9%", "0.588", "0.494", "↑+19.1%"], ["業務三課", 37, 5, "38.5%", "31.2%", "56.2%", "62.5%", "3.81", "8.0", "0.489", "0.340", "↑+44.0%", "0.608", "0.494", "↑+23.2%"], ["業務四課", 23, 5, "38.5%", "21.7%", "52.2%", "73.9%", "3.57", "6.0", "0.432", "0.408", "↑+5.9%", "0.567", "0.551", "↑+3.0%"], ["業務五課", 20, "—", "—", "14.3%", "57.1%", "57.1%", "4.93", "11.0", "0.350", "0.275", "↑+27.3%", "0.500", "0.438", "↑+14.2%"], ["業務二課", 19, 1, "7.7%", "10.5%", "36.8%", "84.2%", "3.79", "6.0", "0.354", "0.408", "↓-13.4%", "0.509", "0.551", "↓-7.7%"], ["業務六課", 13, "—", "—", "7.7%", "38.5%", "46.2%", "5.23", "11.0", "0.317", "0.275", "↑+15.4%", "0.474", "0.438", "↑+8.3%"]]}, "pstruct-Total-cases": {"title": "Total｜P1～P4 結構明細", "columns": ["entrust_id", "產業名稱", "職缺名稱", "課別", "處理人員", "主管決策名次", "主管決策優先級", "當輪最高優先級", "當輪P1人數", "當輪P2人數", "當輪P3人數", "當輪P4人數"], "rows": [[1, "生化科技研發業", "人力資源類人員", "業務一課", "彭莉雰", 1.0, "P1", "P1", 1, 0, 0, 7], [17, "婚紗服務業", "貿易類人員", "業務三課", "吳憶伶", 1.0, "P1", "P1", 1, 0, 0, 7], [105, "綜合商品批發代理業", "生技 / 醫療研發類人員", "業務三課", "洪秀燕", 1.0, "P1", "P1", 1, 0, 0, 7], [123, "精密儀器相關製造業", "業務銷售類人員", "業務三課", "許玟芳", 1.0, "P1", "P1", 1, 0, 0, 7], [139, "IC設計相關業", "財務 / 會計 / 稅務類", "業務四課", "薛溦綺", 1.0, "P1", "P1", 1, 0, 0, 5], [145, "其他食品製造業", "業務銷售類人員", "業務五課", "李凱強", 1.0, "P1", "P1", 1, 1, 1, 7], [228, "鐘錶／眼鏡零售業", "醫療專業人員", "業務五課", "林均奕", 1.0, "P1", "P1", 1, 0, 0, 9], [246, "印刷電路板製造業(PCB)", "工程研發類人員", "業務二課", "陳炳銘", 1.0, "P1", "P1", 2, 1, 1, 2], [260, "銀行業", "金融專業相關類人員", "業務三課", "蔡存菁", 1.0, "P1", "P1", 1, 0, 0, 7], [326, "旅館業", "旅遊休閒類人員", "業務一課", "李少輔", 1.0, "P1", "P1", 1, 0, 0, 7], [336, "橡膠製品製造業", "業務銷售類人員", "業務一課", "張正瑾", 1.0, "P1", "P1", 1, 0, 0, 7], [19, "餐館業", "餐飲類人員", "業務六課", "楊仁豪", 2.0, "P1", "P1", 2, 0, 0, 8], [244, "不動產經營業", "財務 / 會計 / 稅務類", "業務三課", "洪秀燕", 2.0, "P3", "P1", 1, 0, 1, 6], [248, "建築工程業", "營建施作類人員", "業務六課", "—", 2.0, "P1", "P1", 2, 0, 0, 8], [266, "綜合商品批發代理業", "業務銷售類人員", "業務一課", "彭莉雰", 2.0, "P1", "P1", 3, 1, 3, 1], [294, "其他餐飲業", "財務 / 會計 / 稅務類", "業務一課", "李少輔", 2.0, "P3", "P1", 1, 0, 1, 6], [304, "餐館業", "經營 / 幕僚類人員", "業務六課", "楊仁豪", 2.0, "P1", "P1", 2, 1, 1, 6], [324, "廣告行銷公關業", "業務銷售類人員", "業務一課", "潘弘哲", 2.0, "P1", "P1", 2, 0, 1, 5], [342, "其他醫療保健服務業", "業務銷售類人員", "業務三課", "吳美穎", 2.0, "P3", "P1", 1, 0, 2, 5], [164, "鞋類製造業", "業務銷售類人員", "業務五課", "洪士雅", 3.0, "P4", "P1", 1, 1, 0, 8], [254, "百貨相關業", "MIS / 網管類人員", "業務三課", "許玟芳", 3.0, "P1", "P1", 3, 1, 0, 4], [67, "消費性電子產品製造業", "業務銷售類人員", "業務四課", "梅羽嵐", 4.0, "P3", "P1", 1, 2, 3, 0], [109, "綜合商品批發代理業", "人力資源類人員", "業務一課", "—", 4.0, "P3", "P1", 1, 1, 3, 3], [127, "精密儀器相關製造業", "生產管理類人員", "業務二課", "陳裕勝", 4.0, "P4", "P1", 1, 1, 1, 3], [238, "綜合商品批發代理業", "業務銷售類人員", "業務一課", "張毓君", 4.0, "P2", "P1", 3, 1, 3, 1], [322, "其他電子零組件相關業", "工程研發類人員", "業務四課", "陳玉函", 4.0, "P2", "P1", 3, 1, 2, 0], [71, "其他電子零組件相關業", "業務銷售類人員", "業務二課", "陳炳銘", 5.0, "P1", "P1", 5, 1, 0, 0], [125, "鞋類／布類／服飾品零售業", "財務 / 會計 / 稅務類", "業務三課", "洪秀燕", 5.0, "P4", "P1", 1, 0, 1, 6], [137, "光電產業", "業務銷售類人員", "業務二課", "陳裕勝", 5.0, "P3", "P1", 2, 1, 2, 1], [162, "其他電子零組件相關業", "業務銷售類人員", "業務二課", "陳炳銘", 5.0, "P1", "P1", 5, 1, 0, 0], [226, "印刷電路板製造業(PCB)", "工程研發類人員", "業務二課", "林姿儀", 5.0, "P4", "P1", 2, 1, 1, 2], [85, "其他電子零組件相關業", "業務銷售類人員", "業務四課", "劉宸希", 6.0, "P3", "P1", 2, 1, 3, 0], [131, "通訊機械器材相關業", "工程研發類人員", "業務四課", "林千仁", 6.0, "P4", "P1", 2, 1, 0, 3], [160, "半導體製造業", "業務銷售類人員", "業務四課", "林千仁", 6.0, "P4", "P1", 1, 1, 3, 1], [176, "半導體製造業", "業務銷售類人員", "業務二課", "陳裕勝", 6.0, "P3", "P1", 1, 1, 4, 0], [262, "半導體製造業", "行銷類人員", "業務四課", "林千仁", 6.0, "P4", "P1", 2, 0, 0, 4], [320, "醫療器材製造業", "生產管理類人員", "業務三課", "吳憶伶", 6.0, "P4", "P1", 1, 0, 0, 7], [334, "塑膠製品製造業", "工程研發類人員", "業務三課", "吳憶伶", 6.0, "P4", "P1", 1, 0, 0, 7], [346, "其他電子零組件相關業", "業務銷售類人員", "業務四課", "劉宸希", 6.0, "P3", "P1", 2, 1, 3, 0], [380, "精密儀器相關製造業", "專案 / 產品管理類人員", "業務二課", "鄭妍華", 6.0, "P4", "P1", 1, 0, 1, 4], [43, "其他食品製造業", "生產管理類人員", "業務五課", "許家瑜", 7.0, "P4", "P1", 1, 1, 2, 6], [153, "其他電子零組件相關業", "軟體 / 工程類人員", "業務六課", "林均奕", 9.0, "P4", "P1", 1, 0, 0, 9], [384, "家用電器製造業", "業務銷售類人員", "業務五課", "林均奕", 9.0, "P4", "P1", 2, 0, 0, 8], [55, "家庭電器／設備及用品批發業", "行銷類人員", "業務一課", "張毓君", 1.0, "P2", "P2", 0, 1, 0, 7], [97, "消費性電子產品製造業", "業務銷售類人員", "業務一課", "陳盈妙", 1.0, "P2", "P2", 0, 2, 0, 6], [250, "旅館業", "經營 / 幕僚類人員", "業務一課", "李少輔", 1.0, "P2", "P2", 0, 1, 0, 7], [366, "空調水機電工程業", "專案 / 產品管理類人員", "業務一課", "潘弘哲", 1.0, "P2", "P2", 0, 1, 0, 7], [141, "藥品／化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "彭莉雰", 2.0, "P2", "P2", 0, 2, 0, 6], [216, "自動控制相關業", "工程研發類人員", "業務四課", "劉宸希", 2.0, "P3", "P2", 0, 1, 1, 4], [27, "電腦系統整合服務業", "軟體 / 工程類人員", "業務五課", "許家瑜", 3.0, "P4", "P2", 0, 1, 0, 9], [147, "生化科技研發業", "業務銷售類人員", "業務五課", "—", 3.0, "P4", "P2", 0, 1, 0, 9], [274, "百貨相關業", "人力資源類人員", "業務三課", "洪秀燕", 3.0, "P3", "P2", 0, 2, 1, 5], [59, "其他電子零組件相關業", "採購 / 資材 / 倉管類人員", "業務四課", "梅羽嵐", 5.0, "P4", "P2", 0, 1, 1, 4], [310, "餐館業", "業務銷售類人員", "業務三課", "洪秀燕", 5.0, "P4", "P2", 0, 1, 1, 6], [101, "化學原料製造業", "專案 / 產品管理類人員", "業務一課", "張正瑾", 6.0, "P4", "P2", 0, 1, 1, 6], [117, "其他食品製造業", "業務銷售類人員", "業務三課", "洪秀燕", 6.0, "P4", "P2", 0, 1, 0, 7], [9, "藥品╱化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "—", 8.0, "P4", "P2", 0, 2, 0, 6], [133, "其他醫療保健服務業", "專案 / 產品管理類人員", "業務三課", "洪秀燕", 1.0, "P3", "P3", 0, 0, 1, 7], [170, "其他電子零組件相關業", "品保 / 品管類人員", "業務三課", "吳灃展", 1.0, "P3", "P3", 0, 0, 2, 6], [210, "藥品製造業", "業務銷售類人員", "業務六課", "詹季燁", 1.0, "P3", "P3", 0, 0, 2, 8], [278, "半導體製造業", "財務 / 會計 / 稅務類", "業務四課", "胡永鵬", 1.0, "P3", "P3", 0, 0, 1, 5], [312, "電子通訊／電腦週邊零售業", "業務銷售類人員", "業務一課", "陳盈妙", 1.0, "P3", "P3", 0, 0, 1, 7], [25, "半導體製造業", "軟體 / 工程類人員", "業務四課", "劉宸希", 2.0, "P3", "P3", 0, 0, 2, 4], [51, "建築工程業", "採購 / 資材 / 倉管類人員", "業務五課", "—", 2.0, "P4", "P3", 0, 0, 1, 9], [79, "綜合商品批發代理業", "經營 / 幕僚類人員", "業務三課", "吳美穎", 2.0, "P3", "P3", 0, 0, 5, 3], [111, "綜合商品批發代理業", "業務銷售類人員", "業務四課", "陳玉函", 2.0, "P4", "P3", 0, 0, 1, 5], [192, "其他半導體相關業", "營建規劃類人員", "業務二課", "鄭妍華", 2.0, "P4", "P3", 0, 0, 1, 5], [220, "橡膠製品製造業", "業務銷售類人員", "業務三課", "許玟芳", 2.0, "P4", "P3", 0, 0, 1, 7], [232, "藥品製造業", "生產管理類人員", "業務一課", "陳盈妙", 2.0, "P4", "P3", 0, 0, 1, 7], [332, "電子通訊/電腦週邊批發業", "業務銷售類人員", "業務二課", "林姿儀", 2.0, "P4", "P3", 0, 0, 1, 5], [75, "美容／美體業", "人力資源類人員", "業務一課", "—", 4.0, "P4", "P3", 0, 0, 1, 7], [374, "光電產業", "專案 / 產品管理類人員", "業務四課", "胡永鵬", 5.0, "P4", "P3", 0, 0, 3, 3], [158, "汽車及其零件製造業", "業務銷售類人員", "業務三課", "許玟芳", 6.0, "P4", "P3", 0, 0, 2, 6], [186, "其他金屬相關製造業", "業務銷售類人員", "業務一課", "張毓君", 7.0, "P4", "P3", 0, 0, 4, 4], [308, "人身保險業", "經營 / 幕僚類人員", "業務一課", "—", 8.0, "P4", "P3", 0, 0, 1, 7], [230, "其他食品製造業", "人力資源類人員", "業務六課", "楊仁豪", 9.0, "P4", "P3", 0, 0, 1, 9], [23, "其他零售業", "採購 / 資材 / 倉管類人員", "業務一課", "陳盈妙", 1.0, "P4", "P4", 0, 0, 0, 8], [91, "罐頭食品加工業", "經營 / 幕僚類人員|品保 / 品管類人員", "業務一課", "—", 1.0, "P4", "P4", 0, 0, 0, 8], [113, "其他半導體相關業", "維修 / 技術服務類人員", "業務四課", "薛溦綺", 1.0, "P4", "P4", 0, 0, 0, 6], [234, "消費性電子產品製造業", "人力資源類人員", "業務三課", "吳美穎", 1.0, "P4", "P4", 0, 0, 0, 8], [280, "其他食品製造業", "製程規劃類人員", "業務三課", "許玟芳", 1.0, "P4", "P4", 0, 0, 0, 8], [286, "汽機車及其零配件用品／批發業", "行銷類人員|人力資源類人員", "業務三課", "—", 1.0, "P4", "P4", 0, 0, 0, 8], [292, "其他電子零組件相關業", "生產管理類人員|環境安全衛生類人員", "業務四課", "薛溦綺", 1.0, "P4", "P4", 0, 0, 0, 6], [298, "工商顧問服務業", "客戶服務類人員", "業務四課", "劉宸希", 1.0, "P4", "P4", 0, 0, 0, 6], [300, "金屬鍛造及粉末冶金業", "法務 / 智財類人員", "業務三課", "—", 1.0, "P4", "P4", 0, 0, 0, 8], [302, "織布業", "業務銷售類人員", "業務一課", "陳盈妙", 1.0, "P4", "P4", 0, 0, 0, 8], [390, "光電產業", "財務 / 會計 / 稅務類", "業務二課", "高偉婷", 1.0, "P4", "P4", 0, 0, 0, 6], [3, "消費性電子產品製造業", "業務銷售類人員|專案 / 產品管理類人員", "業務三課", "吳灃展", 2.0, "P4", "P4", 0, 0, 0, 8], [87, "銀行業", "金融專業相關類人員", "業務六課", "詹季燁", 2.0, "P4", "P4", 0, 0, 0, 10], [172, "紡織成衣業", "MIS / 網管類人員|業務銷售類人員", "業務一課", "湯淑雅", 2.0, "P4", "P4", 0, 0, 0, 8], [182, "建物裝修及裝潢業", "營建規劃類人員", "業務一課", "潘弘哲", 2.0, "P4", "P4", 0, 0, 0, 8], [222, "紡織成衣業", "業務銷售類人員", "業務一課", "湯淑雅", 2.0, "P4", "P4", 0, 0, 0, 8], [258, "化妝品製造業", "財務 / 會計 / 稅務類", "業務一課", "湯淑雅", 2.0, "P4", "P4", 0, 0, 0, 8], [360, "其他半導體相關業", "製程規劃類人員|維修 / 技術服務類人員|MIS / 網管類人員", "業務二課", "陳裕勝", 2.0, "P4", "P4", 0, 0, 0, 6], [95, "航空器及其零件製造修配業", "品保 / 品管類人員|製程規劃類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [166, "證券及期貨業", "金融專業相關類人員", "業務一課", "陳盈妙", 3.0, "P4", "P4", 0, 0, 0, 8], [194, "建築及工程技術服務業", "客戶服務類人員|製圖 / 測量類人員|營建施作類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [252, "綜合商品批發代理業", "品保 / 品管類人員", "業務五課", "—", 3.0, "P4", "P4", 0, 0, 0, 10], [264, "被動電子元件製造業", "品保 / 品管類人員", "業務二課", "陳炳銘", 3.0, "P4", "P4", 0, 0, 0, 6], [306, "建物裝修及裝潢業", "法務 / 智財類人員", "業務三課", "—", 3.0, "P4", "P4", 0, 0, 0, 8], [354, "其他半導體相關業", "行政 / 總務類人員", "業務二課", "陳炳銘", 3.0, "P4", "P4", 0, 0, 0, 6], [356, "半導體製造業", "維修 / 技術服務類人員|設計類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [364, "診所", "門市營業類人員", "業務五課", "—", 3.0, "P4", "P4", 0, 0, 0, 10], [386, "其他電子零組件相關業", "專案 / 產品管理類人員|工程研發類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [7, "電力機械器材製造修配業", "工程研發類人員|軟體 / 工程類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [49, "電腦及其週邊設備製造業", "業務銷售類人員|品保 / 品管類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [63, "其他電子零組件相關業", "工程研發類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [121, "印刷電路板製造業(PCB)", "製程規劃類人員|專案 / 產品管理類人員|客戶服務類人員|業務銷售類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [31, "其他食品製造業", "運輸物流類人員", "業務一課", "張正瑾", 5.0, "P4", "P4", 0, 0, 0, 8], [45, "休閒服務業", "餐飲類人員|人力資源類人員|行銷類人員", "業務一課", "李少輔", 5.0, "P4", "P4", 0, 0, 0, 8], [65, "清潔用品製造業", "人力資源類人員", "業務一課", "湯淑雅", 5.0, "P4", "P4", 0, 0, 0, 8], [202, "機械設備租賃業", "業務銷售類人員|生產管理類人員", "業務六課", "—", 5.0, "P4", "P4", 0, 0, 0, 10], [256, "餐館業", "營建規劃類人員|人力資源類人員|採購 / 資材 / 倉管類人員", "業務一課", "李少輔", 5.0, "P4", "P4", 0, 0, 0, 8], [296, "半導體製造業", "軟體 / 工程類人員|業務銷售類人員", "業務四課", "陳玉函", 5.0, "P4", "P4", 0, 0, 0, 6], [29, "建築工程業", "採購 / 資材 / 倉管類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [81, "建築工程業", "營建施作類人員|營建規劃類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [135, "建築及工程技術服務業", "經營 / 幕僚類人員|工程研發類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [143, "電腦及其週邊設備製造業", "工程研發類人員|軟體 / 工程類人員", "業務二課", "林姿儀", 6.0, "P4", "P4", 0, 0, 0, 6], [168, "餐館業", "餐飲類人員", "業務六課", "楊仁豪", 6.0, "P4", "P4", 0, 0, 0, 10], [184, "其他電子零組件相關業", "生產管理類人員|MIS / 網管類人員|工程研發類人員", "業務四課", "胡永鵬", 6.0, "P4", "P4", 0, 0, 0, 6], [242, "工商顧問服務業", "金融專業相關類人員|醫療保健服務人員", "業務三課", "吳美穎", 6.0, "P4", "P4", 0, 0, 0, 8], [276, "其他出版業", "行銷類人員|人力資源類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [11, "其他教育服務業", "—", "業務三課", "許玟芳", 7.0, "P4", "P4", 0, 0, 0, 8], [13, "寵物相關服務業", "軟體 / 工程類人員", "業務六課", "蔡俊男", 7.0, "P4", "P4", 0, 0, 0, 10], [33, "建材／傢俱批發業", "業務銷售類人員", "業務三課", "吳灃展", 7.0, "P4", "P4", 0, 0, 0, 8], [61, "自動控制相關業", "生產管理類人員|經營 / 幕僚類人員|業務銷售類人員", "業務三課", "許玟芳", 7.0, "P4", "P4", 0, 0, 0, 8], [99, "自動控制相關業", "經營 / 幕僚類人員|工程研發類人員|人力資源類人員", "業務六課", "蔡俊男", 7.0, "P4", "P4", 0, 0, 0, 10], [119, "工商顧問服務業", "財務 / 會計 / 稅務類|設計類人員|行銷類人員|人力資源類人員|法務 / 智財類人員", "業務一課", "彭莉雰", 7.0, "P4", "P4", 0, 0, 0, 8], [129, "電力供應業", "經營 / 幕僚類人員", "業務一課", "潘弘哲", 7.0, "P4", "P4", 0, 0, 0, 8], [272, "其他商品批發業", "專案 / 產品管理類人員", "業務五課", "洪士雅", 7.0, "P4", "P4", 0, 0, 0, 10], [328, "空調水機電工程業", "設計類人員", "業務一課", "潘弘哲", 7.0, "P4", "P4", 0, 0, 0, 8], [15, "汽車及其零件製造業", "品保 / 品管類人員|業務銷售類人員", "業務三課", "洪秀燕", 8.0, "P4", "P4", 0, 0, 0, 8], [53, "家庭電器／設備及用品批發業", "設計類人員", "業務一課", "—", 8.0, "P4", "P4", 0, 0, 0, 8], [57, "醫院", "醫療保健服務人員", "業務六課", "楊仁豪", 8.0, "P4", "P4", 0, 0, 0, 10], [73, "餐館業", "生產管理類人員|財務 / 會計 / 稅務類", "業務三課", "洪秀燕", 8.0, "P4", "P4", 0, 0, 0, 8], [89, "醫療器材製造業", "工程研發類人員|業務銷售類人員", "業務五課", "李凱強", 8.0, "P4", "P4", 0, 0, 0, 10], [214, "藥品／化妝品及清潔用品零售業", "專案 / 產品管理類人員|生技 / 醫療研發類人員", "業務一課", "張毓君", 8.0, "P4", "P4", 0, 0, 0, 8], [344, "農事及畜牧服務業", "餐飲類人員", "業務六課", "楊仁豪", 8.0, "P4", "P4", 0, 0, 0, 10], [352, "首飾及貴金屬零售業", "門市營業類人員", "業務三課", "—", 8.0, "P4", "P4", 0, 0, 0, 8], [362, "加工紙製造業", "業務銷售類人員", "業務一課", "—", 8.0, "P4", "P4", 0, 0, 0, 8], [376, "食品什貨零售業", "門市營業類人員|業務銷售類人員", "業務三課", "洪秀燕", 8.0, "P4", "P4", 0, 0, 0, 8], [240, "其他餐飲業", "財務 / 會計 / 稅務類", "業務五課", "林均奕", 9.0, "P4", "P4", 0, 0, 0, 10], [370, "汽車及其零件製造業", "生產管理類人員|品保 / 品管類人員", "業務五課", "洪士雅", 10.0, "P4", "P4", 0, 0, 0, 10]]}, "miss-Total-cases": {"title": "Total｜未命中案件明細（以 Top5 為界）", "columns": ["entrust_id", "產業名稱", "職缺名稱", "課別", "處理人員", "分工產業", "主管決策名次", "主管決策優先級", "當輪最高優先級"], "rows": [[370, "汽車及其零件製造業", "生產管理類人員|品保 / 品管類人員", "業務五課", "洪士雅", "非科", 10.0, "P4", "P4"], [153, "其他電子零組件相關業", "軟體 / 工程類人員", "業務六課", "林均奕", "科技", 9.0, "P4", "P1"], [230, "其他食品製造業", "人力資源類人員", "業務六課", "楊仁豪", "非科", 9.0, "P4", "P3"], [240, "其他餐飲業", "財務 / 會計 / 稅務類", "業務五課", "林均奕", "非科", 9.0, "P4", "P4"], [384, "家用電器製造業", "業務銷售類人員", "業務五課", "林均奕", "非科", 9.0, "P4", "P1"], [9, "藥品╱化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P2"], [15, "汽車及其零件製造業", "品保 / 品管類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [53, "家庭電器／設備及用品批發業", "設計類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [57, "醫院", "醫療保健服務人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [73, "餐館業", "生產管理類人員|財務 / 會計 / 稅務類", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [89, "醫療器材製造業", "工程研發類人員|業務銷售類人員", "業務五課", "李凱強", "非科", 8.0, "P4", "P4"], [214, "藥品／化妝品及清潔用品零售業", "專案 / 產品管理類人員|生技 / 醫療研發類人員", "業務一課", "張毓君", "非科", 8.0, "P4", "P4"], [308, "人身保險業", "經營 / 幕僚類人員", "業務一課", "—", "非科", 8.0, "P4", "P3"], [344, "農事及畜牧服務業", "餐飲類人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [352, "首飾及貴金屬零售業", "門市營業類人員", "業務三課", "—", "非科", 8.0, "P4", "P4"], [362, "加工紙製造業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [376, "食品什貨零售業", "門市營業類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [11, "其他教育服務業", "—", "業務三課", "許玟芳", "非科", 7.0, "P4", "P4"], [13, "寵物相關服務業", "軟體 / 工程類人員", "業務六課", "蔡俊男", "非科", 7.0, "P4", "P4"], [33, "建材／傢俱批發業", "業務銷售類人員", "業務三課", "吳灃展", "非科", 7.0, "P4", "P4"]]}, "overview-業務一部＋業務二部-process": {"title": "業務一部＋業務二部｜by process_ug_name 指標明細", "columns": ["課別", "案件數", "跨科案件數", "跨科比例", "Top1", "Top3", "Top5", "平均主管決策名次", "平均推薦池大小", "MRR", "隨機MRR基準", "MRR uplift", "NDCG", "隨機NDCG基準", "NDCG uplift"], "rows": [["業務一課", 44, 2, "15.4%", "26.2%", "50.0%", "66.7%", "3.86", "8.0", "0.462", "0.340", "↑+35.9%", "0.588", "0.494", "↑+19.1%"], ["業務三課", 37, 5, "38.5%", "31.2%", "56.2%", "62.5%", "3.81", "8.0", "0.489", "0.340", "↑+44.0%", "0.608", "0.494", "↑+23.2%"], ["業務四課", 23, 5, "38.5%", "21.7%", "52.2%", "73.9%", "3.57", "6.0", "0.432", "0.408", "↑+5.9%", "0.567", "0.551", "↑+3.0%"], ["業務二課", 19, 1, "7.7%", "10.5%", "36.8%", "84.2%", "3.79", "6.0", "0.354", "0.408", "↓-13.4%", "0.509", "0.551", "↓-7.7%"]]}, "pstruct-業務一部＋業務二部-cases": {"title": "業務一部＋業務二部｜P1～P4 結構明細", "columns": ["entrust_id", "產業名稱", "職缺名稱", "課別", "處理人員", "主管決策名次", "主管決策優先級", "當輪最高優先級", "當輪P1人數", "當輪P2人數", "當輪P3人數", "當輪P4人數"], "rows": [[1, "生化科技研發業", "人力資源類人員", "業務一課", "彭莉雰", 1.0, "P1", "P1", 1, 0, 0, 7], [17, "婚紗服務業", "貿易類人員", "業務三課", "吳憶伶", 1.0, "P1", "P1", 1, 0, 0, 7], [105, "綜合商品批發代理業", "生技 / 醫療研發類人員", "業務三課", "洪秀燕", 1.0, "P1", "P1", 1, 0, 0, 7], [123, "精密儀器相關製造業", "業務銷售類人員", "業務三課", "許玟芳", 1.0, "P1", "P1", 1, 0, 0, 7], [139, "IC設計相關業", "財務 / 會計 / 稅務類", "業務四課", "薛溦綺", 1.0, "P1", "P1", 1, 0, 0, 5], [246, "印刷電路板製造業(PCB)", "工程研發類人員", "業務二課", "陳炳銘", 1.0, "P1", "P1", 2, 1, 1, 2], [260, "銀行業", "金融專業相關類人員", "業務三課", "蔡存菁", 1.0, "P1", "P1", 1, 0, 0, 7], [326, "旅館業", "旅遊休閒類人員", "業務一課", "李少輔", 1.0, "P1", "P1", 1, 0, 0, 7], [336, "橡膠製品製造業", "業務銷售類人員", "業務一課", "張正瑾", 1.0, "P1", "P1", 1, 0, 0, 7], [244, "不動產經營業", "財務 / 會計 / 稅務類", "業務三課", "洪秀燕", 2.0, "P3", "P1", 1, 0, 1, 6], [266, "綜合商品批發代理業", "業務銷售類人員", "業務一課", "彭莉雰", 2.0, "P1", "P1", 3, 1, 3, 1], [294, "其他餐飲業", "財務 / 會計 / 稅務類", "業務一課", "李少輔", 2.0, "P3", "P1", 1, 0, 1, 6], [324, "廣告行銷公關業", "業務銷售類人員", "業務一課", "潘弘哲", 2.0, "P1", "P1", 2, 0, 1, 5], [342, "其他醫療保健服務業", "業務銷售類人員", "業務三課", "吳美穎", 2.0, "P3", "P1", 1, 0, 2, 5], [254, "百貨相關業", "MIS / 網管類人員", "業務三課", "許玟芳", 3.0, "P1", "P1", 3, 1, 0, 4], [67, "消費性電子產品製造業", "業務銷售類人員", "業務四課", "梅羽嵐", 4.0, "P3", "P1", 1, 2, 3, 0], [109, "綜合商品批發代理業", "人力資源類人員", "業務一課", "—", 4.0, "P3", "P1", 1, 1, 3, 3], [127, "精密儀器相關製造業", "生產管理類人員", "業務二課", "陳裕勝", 4.0, "P4", "P1", 1, 1, 1, 3], [238, "綜合商品批發代理業", "業務銷售類人員", "業務一課", "張毓君", 4.0, "P2", "P1", 3, 1, 3, 1], [322, "其他電子零組件相關業", "工程研發類人員", "業務四課", "陳玉函", 4.0, "P2", "P1", 3, 1, 2, 0], [71, "其他電子零組件相關業", "業務銷售類人員", "業務二課", "陳炳銘", 5.0, "P1", "P1", 5, 1, 0, 0], [125, "鞋類／布類／服飾品零售業", "財務 / 會計 / 稅務類", "業務三課", "洪秀燕", 5.0, "P4", "P1", 1, 0, 1, 6], [137, "光電產業", "業務銷售類人員", "業務二課", "陳裕勝", 5.0, "P3", "P1", 2, 1, 2, 1], [162, "其他電子零組件相關業", "業務銷售類人員", "業務二課", "陳炳銘", 5.0, "P1", "P1", 5, 1, 0, 0], [226, "印刷電路板製造業(PCB)", "工程研發類人員", "業務二課", "林姿儀", 5.0, "P4", "P1", 2, 1, 1, 2], [85, "其他電子零組件相關業", "業務銷售類人員", "業務四課", "劉宸希", 6.0, "P3", "P1", 2, 1, 3, 0], [131, "通訊機械器材相關業", "工程研發類人員", "業務四課", "林千仁", 6.0, "P4", "P1", 2, 1, 0, 3], [160, "半導體製造業", "業務銷售類人員", "業務四課", "林千仁", 6.0, "P4", "P1", 1, 1, 3, 1], [176, "半導體製造業", "業務銷售類人員", "業務二課", "陳裕勝", 6.0, "P3", "P1", 1, 1, 4, 0], [262, "半導體製造業", "行銷類人員", "業務四課", "林千仁", 6.0, "P4", "P1", 2, 0, 0, 4], [320, "醫療器材製造業", "生產管理類人員", "業務三課", "吳憶伶", 6.0, "P4", "P1", 1, 0, 0, 7], [334, "塑膠製品製造業", "工程研發類人員", "業務三課", "吳憶伶", 6.0, "P4", "P1", 1, 0, 0, 7], [346, "其他電子零組件相關業", "業務銷售類人員", "業務四課", "劉宸希", 6.0, "P3", "P1", 2, 1, 3, 0], [380, "精密儀器相關製造業", "專案 / 產品管理類人員", "業務二課", "鄭妍華", 6.0, "P4", "P1", 1, 0, 1, 4], [55, "家庭電器／設備及用品批發業", "行銷類人員", "業務一課", "張毓君", 1.0, "P2", "P2", 0, 1, 0, 7], [97, "消費性電子產品製造業", "業務銷售類人員", "業務一課", "陳盈妙", 1.0, "P2", "P2", 0, 2, 0, 6], [250, "旅館業", "經營 / 幕僚類人員", "業務一課", "李少輔", 1.0, "P2", "P2", 0, 1, 0, 7], [366, "空調水機電工程業", "專案 / 產品管理類人員", "業務一課", "潘弘哲", 1.0, "P2", "P2", 0, 1, 0, 7], [141, "藥品／化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "彭莉雰", 2.0, "P2", "P2", 0, 2, 0, 6], [216, "自動控制相關業", "工程研發類人員", "業務四課", "劉宸希", 2.0, "P3", "P2", 0, 1, 1, 4], [274, "百貨相關業", "人力資源類人員", "業務三課", "洪秀燕", 3.0, "P3", "P2", 0, 2, 1, 5], [59, "其他電子零組件相關業", "採購 / 資材 / 倉管類人員", "業務四課", "梅羽嵐", 5.0, "P4", "P2", 0, 1, 1, 4], [310, "餐館業", "業務銷售類人員", "業務三課", "洪秀燕", 5.0, "P4", "P2", 0, 1, 1, 6], [101, "化學原料製造業", "專案 / 產品管理類人員", "業務一課", "張正瑾", 6.0, "P4", "P2", 0, 1, 1, 6], [117, "其他食品製造業", "業務銷售類人員", "業務三課", "洪秀燕", 6.0, "P4", "P2", 0, 1, 0, 7], [9, "藥品╱化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "—", 8.0, "P4", "P2", 0, 2, 0, 6], [133, "其他醫療保健服務業", "專案 / 產品管理類人員", "業務三課", "洪秀燕", 1.0, "P3", "P3", 0, 0, 1, 7], [170, "其他電子零組件相關業", "品保 / 品管類人員", "業務三課", "吳灃展", 1.0, "P3", "P3", 0, 0, 2, 6], [278, "半導體製造業", "財務 / 會計 / 稅務類", "業務四課", "胡永鵬", 1.0, "P3", "P3", 0, 0, 1, 5], [312, "電子通訊／電腦週邊零售業", "業務銷售類人員", "業務一課", "陳盈妙", 1.0, "P3", "P3", 0, 0, 1, 7], [25, "半導體製造業", "軟體 / 工程類人員", "業務四課", "劉宸希", 2.0, "P3", "P3", 0, 0, 2, 4], [79, "綜合商品批發代理業", "經營 / 幕僚類人員", "業務三課", "吳美穎", 2.0, "P3", "P3", 0, 0, 5, 3], [111, "綜合商品批發代理業", "業務銷售類人員", "業務四課", "陳玉函", 2.0, "P4", "P3", 0, 0, 1, 5], [192, "其他半導體相關業", "營建規劃類人員", "業務二課", "鄭妍華", 2.0, "P4", "P3", 0, 0, 1, 5], [220, "橡膠製品製造業", "業務銷售類人員", "業務三課", "許玟芳", 2.0, "P4", "P3", 0, 0, 1, 7], [232, "藥品製造業", "生產管理類人員", "業務一課", "陳盈妙", 2.0, "P4", "P3", 0, 0, 1, 7], [332, "電子通訊/電腦週邊批發業", "業務銷售類人員", "業務二課", "林姿儀", 2.0, "P4", "P3", 0, 0, 1, 5], [75, "美容／美體業", "人力資源類人員", "業務一課", "—", 4.0, "P4", "P3", 0, 0, 1, 7], [374, "光電產業", "專案 / 產品管理類人員", "業務四課", "胡永鵬", 5.0, "P4", "P3", 0, 0, 3, 3], [158, "汽車及其零件製造業", "業務銷售類人員", "業務三課", "許玟芳", 6.0, "P4", "P3", 0, 0, 2, 6], [186, "其他金屬相關製造業", "業務銷售類人員", "業務一課", "張毓君", 7.0, "P4", "P3", 0, 0, 4, 4], [308, "人身保險業", "經營 / 幕僚類人員", "業務一課", "—", 8.0, "P4", "P3", 0, 0, 1, 7], [23, "其他零售業", "採購 / 資材 / 倉管類人員", "業務一課", "陳盈妙", 1.0, "P4", "P4", 0, 0, 0, 8], [91, "罐頭食品加工業", "經營 / 幕僚類人員|品保 / 品管類人員", "業務一課", "—", 1.0, "P4", "P4", 0, 0, 0, 8], [113, "其他半導體相關業", "維修 / 技術服務類人員", "業務四課", "薛溦綺", 1.0, "P4", "P4", 0, 0, 0, 6], [234, "消費性電子產品製造業", "人力資源類人員", "業務三課", "吳美穎", 1.0, "P4", "P4", 0, 0, 0, 8], [280, "其他食品製造業", "製程規劃類人員", "業務三課", "許玟芳", 1.0, "P4", "P4", 0, 0, 0, 8], [286, "汽機車及其零配件用品／批發業", "行銷類人員|人力資源類人員", "業務三課", "—", 1.0, "P4", "P4", 0, 0, 0, 8], [292, "其他電子零組件相關業", "生產管理類人員|環境安全衛生類人員", "業務四課", "薛溦綺", 1.0, "P4", "P4", 0, 0, 0, 6], [298, "工商顧問服務業", "客戶服務類人員", "業務四課", "劉宸希", 1.0, "P4", "P4", 0, 0, 0, 6], [300, "金屬鍛造及粉末冶金業", "法務 / 智財類人員", "業務三課", "—", 1.0, "P4", "P4", 0, 0, 0, 8], [302, "織布業", "業務銷售類人員", "業務一課", "陳盈妙", 1.0, "P4", "P4", 0, 0, 0, 8], [390, "光電產業", "財務 / 會計 / 稅務類", "業務二課", "高偉婷", 1.0, "P4", "P4", 0, 0, 0, 6], [3, "消費性電子產品製造業", "業務銷售類人員|專案 / 產品管理類人員", "業務三課", "吳灃展", 2.0, "P4", "P4", 0, 0, 0, 8], [172, "紡織成衣業", "MIS / 網管類人員|業務銷售類人員", "業務一課", "湯淑雅", 2.0, "P4", "P4", 0, 0, 0, 8], [182, "建物裝修及裝潢業", "營建規劃類人員", "業務一課", "潘弘哲", 2.0, "P4", "P4", 0, 0, 0, 8], [222, "紡織成衣業", "業務銷售類人員", "業務一課", "湯淑雅", 2.0, "P4", "P4", 0, 0, 0, 8], [258, "化妝品製造業", "財務 / 會計 / 稅務類", "業務一課", "湯淑雅", 2.0, "P4", "P4", 0, 0, 0, 8], [360, "其他半導體相關業", "製程規劃類人員|維修 / 技術服務類人員|MIS / 網管類人員", "業務二課", "陳裕勝", 2.0, "P4", "P4", 0, 0, 0, 6], [95, "航空器及其零件製造修配業", "品保 / 品管類人員|製程規劃類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [166, "證券及期貨業", "金融專業相關類人員", "業務一課", "陳盈妙", 3.0, "P4", "P4", 0, 0, 0, 8], [194, "建築及工程技術服務業", "客戶服務類人員|製圖 / 測量類人員|營建施作類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [264, "被動電子元件製造業", "品保 / 品管類人員", "業務二課", "陳炳銘", 3.0, "P4", "P4", 0, 0, 0, 6], [306, "建物裝修及裝潢業", "法務 / 智財類人員", "業務三課", "—", 3.0, "P4", "P4", 0, 0, 0, 8], [354, "其他半導體相關業", "行政 / 總務類人員", "業務二課", "陳炳銘", 3.0, "P4", "P4", 0, 0, 0, 6], [356, "半導體製造業", "維修 / 技術服務類人員|設計類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [386, "其他電子零組件相關業", "專案 / 產品管理類人員|工程研發類人員", "業務四課", "劉宸希", 3.0, "P4", "P4", 0, 0, 0, 6], [7, "電力機械器材製造修配業", "工程研發類人員|軟體 / 工程類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [49, "電腦及其週邊設備製造業", "業務銷售類人員|品保 / 品管類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [63, "其他電子零組件相關業", "工程研發類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [121, "印刷電路板製造業(PCB)", "製程規劃類人員|專案 / 產品管理類人員|客戶服務類人員|業務銷售類人員", "業務二課", "陳炳銘", 4.0, "P4", "P4", 0, 0, 0, 6], [31, "其他食品製造業", "運輸物流類人員", "業務一課", "張正瑾", 5.0, "P4", "P4", 0, 0, 0, 8], [45, "休閒服務業", "餐飲類人員|人力資源類人員|行銷類人員", "業務一課", "李少輔", 5.0, "P4", "P4", 0, 0, 0, 8], [65, "清潔用品製造業", "人力資源類人員", "業務一課", "湯淑雅", 5.0, "P4", "P4", 0, 0, 0, 8], [256, "餐館業", "營建規劃類人員|人力資源類人員|採購 / 資材 / 倉管類人員", "業務一課", "李少輔", 5.0, "P4", "P4", 0, 0, 0, 8], [296, "半導體製造業", "軟體 / 工程類人員|業務銷售類人員", "業務四課", "陳玉函", 5.0, "P4", "P4", 0, 0, 0, 6], [29, "建築工程業", "採購 / 資材 / 倉管類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [81, "建築工程業", "營建施作類人員|營建規劃類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [135, "建築及工程技術服務業", "經營 / 幕僚類人員|工程研發類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [143, "電腦及其週邊設備製造業", "工程研發類人員|軟體 / 工程類人員", "業務二課", "林姿儀", 6.0, "P4", "P4", 0, 0, 0, 6], [184, "其他電子零組件相關業", "生產管理類人員|MIS / 網管類人員|工程研發類人員", "業務四課", "胡永鵬", 6.0, "P4", "P4", 0, 0, 0, 6], [242, "工商顧問服務業", "金融專業相關類人員|醫療保健服務人員", "業務三課", "吳美穎", 6.0, "P4", "P4", 0, 0, 0, 8], [276, "其他出版業", "行銷類人員|人力資源類人員", "業務一課", "潘弘哲", 6.0, "P4", "P4", 0, 0, 0, 8], [11, "其他教育服務業", "—", "業務三課", "許玟芳", 7.0, "P4", "P4", 0, 0, 0, 8], [33, "建材／傢俱批發業", "業務銷售類人員", "業務三課", "吳灃展", 7.0, "P4", "P4", 0, 0, 0, 8], [61, "自動控制相關業", "生產管理類人員|經營 / 幕僚類人員|業務銷售類人員", "業務三課", "許玟芳", 7.0, "P4", "P4", 0, 0, 0, 8], [119, "工商顧問服務業", "財務 / 會計 / 稅務類|設計類人員|行銷類人員|人力資源類人員|法務 / 智財類人員", "業務一課", "彭莉雰", 7.0, "P4", "P4", 0, 0, 0, 8], [129, "電力供應業", "經營 / 幕僚類人員", "業務一課", "潘弘哲", 7.0, "P4", "P4", 0, 0, 0, 8], [328, "空調水機電工程業", "設計類人員", "業務一課", "潘弘哲", 7.0, "P4", "P4", 0, 0, 0, 8], [15, "汽車及其零件製造業", "品保 / 品管類人員|業務銷售類人員", "業務三課", "洪秀燕", 8.0, "P4", "P4", 0, 0, 0, 8], [53, "家庭電器／設備及用品批發業", "設計類人員", "業務一課", "—", 8.0, "P4", "P4", 0, 0, 0, 8], [73, "餐館業", "生產管理類人員|財務 / 會計 / 稅務類", "業務三課", "洪秀燕", 8.0, "P4", "P4", 0, 0, 0, 8], [214, "藥品／化妝品及清潔用品零售業", "專案 / 產品管理類人員|生技 / 醫療研發類人員", "業務一課", "張毓君", 8.0, "P4", "P4", 0, 0, 0, 8], [352, "首飾及貴金屬零售業", "門市營業類人員", "業務三課", "—", 8.0, "P4", "P4", 0, 0, 0, 8], [362, "加工紙製造業", "業務銷售類人員", "業務一課", "—", 8.0, "P4", "P4", 0, 0, 0, 8], [376, "食品什貨零售業", "門市營業類人員|業務銷售類人員", "業務三課", "洪秀燕", 8.0, "P4", "P4", 0, 0, 0, 8]]}, "miss-業務一部＋業務二部-cases": {"title": "業務一部＋業務二部｜未命中案件明細（以 Top3 為界）", "columns": ["entrust_id", "產業名稱", "職缺名稱", "課別", "處理人員", "分工產業", "主管決策名次", "主管決策優先級", "當輪最高優先級"], "rows": [[9, "藥品╱化妝品及清潔用品批發業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P2"], [15, "汽車及其零件製造業", "品保 / 品管類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [53, "家庭電器／設備及用品批發業", "設計類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [73, "餐館業", "生產管理類人員|財務 / 會計 / 稅務類", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [214, "藥品／化妝品及清潔用品零售業", "專案 / 產品管理類人員|生技 / 醫療研發類人員", "業務一課", "張毓君", "非科", 8.0, "P4", "P4"], [308, "人身保險業", "經營 / 幕僚類人員", "業務一課", "—", "非科", 8.0, "P4", "P3"], [352, "首飾及貴金屬零售業", "門市營業類人員", "業務三課", "—", "非科", 8.0, "P4", "P4"], [362, "加工紙製造業", "業務銷售類人員", "業務一課", "—", "非科", 8.0, "P4", "P4"], [376, "食品什貨零售業", "門市營業類人員|業務銷售類人員", "業務三課", "洪秀燕", "非科", 8.0, "P4", "P4"], [11, "其他教育服務業", "—", "業務三課", "許玟芳", "非科", 7.0, "P4", "P4"], [33, "建材／傢俱批發業", "業務銷售類人員", "業務三課", "吳灃展", "非科", 7.0, "P4", "P4"], [61, "自動控制相關業", "生產管理類人員|經營 / 幕僚類人員|業務銷售類人員", "業務三課", "許玟芳", "非科", 7.0, "P4", "P4"], [119, "工商顧問服務業", "財務 / 會計 / 稅務類|設計類人員|行銷類人員|人力資源類人員|法務 / 智財類人員", "業務一課", "彭莉雰", "非科", 7.0, "P4", "P4"], [129, "電力供應業", "經營 / 幕僚類人員", "業務一課", "潘弘哲", "非科", 7.0, "P4", "P4"], [186, "其他金屬相關製造業", "業務銷售類人員", "業務一課", "張毓君", "非科", 7.0, "P4", "P3"], [328, "空調水機電工程業", "設計類人員", "業務一課", "潘弘哲", "非科", 7.0, "P4", "P4"], [29, "建築工程業", "採購 / 資材 / 倉管類人員", "業務一課", "潘弘哲", "非科", 6.0, "P4", "P4"], [81, "建築工程業", "營建施作類人員|營建規劃類人員", "業務一課", "潘弘哲", "非科", 6.0, "P4", "P4"], [85, "其他電子零組件相關業", "業務銷售類人員", "業務四課", "劉宸希", "科技", 6.0, "P3", "P1"], [101, "化學原料製造業", "專案 / 產品管理類人員", "業務一課", "張正瑾", "非科", 6.0, "P4", "P2"]]}, "overview-台中業務部-process": {"title": "台中業務部｜by process_ug_name 指標明細", "columns": ["課別", "案件數", "跨科案件數", "跨科比例", "Top1", "Top3", "Top5", "平均主管決策名次", "平均推薦池大小", "MRR", "隨機MRR基準", "MRR uplift", "NDCG", "隨機NDCG基準", "NDCG uplift"], "rows": [["業務五課", 20, "—", "—", "14.3%", "57.1%", "57.1%", "4.93", "11.0", "0.350", "0.275", "↑+27.3%", "0.500", "0.438", "↑+14.2%"], ["業務六課", 13, "—", "—", "7.7%", "38.5%", "46.2%", "5.23", "11.0", "0.317", "0.275", "↑+15.4%", "0.474", "0.438", "↑+8.3%"]]}, "pstruct-台中業務部-cases": {"title": "台中業務部｜P1～P4 結構明細", "columns": ["entrust_id", "產業名稱", "職缺名稱", "課別", "處理人員", "主管決策名次", "主管決策優先級", "當輪最高優先級", "當輪P1人數", "當輪P2人數", "當輪P3人數", "當輪P4人數"], "rows": [[145, "其他食品製造業", "業務銷售類人員", "業務五課", "李凱強", 1.0, "P1", "P1", 1, 1, 1, 7], [228, "鐘錶／眼鏡零售業", "醫療專業人員", "業務五課", "林均奕", 1.0, "P1", "P1", 1, 0, 0, 9], [19, "餐館業", "餐飲類人員", "業務六課", "楊仁豪", 2.0, "P1", "P1", 2, 0, 0, 8], [248, "建築工程業", "營建施作類人員", "業務六課", "—", 2.0, "P1", "P1", 2, 0, 0, 8], [304, "餐館業", "經營 / 幕僚類人員", "業務六課", "楊仁豪", 2.0, "P1", "P1", 2, 1, 1, 6], [164, "鞋類製造業", "業務銷售類人員", "業務五課", "洪士雅", 3.0, "P4", "P1", 1, 1, 0, 8], [43, "其他食品製造業", "生產管理類人員", "業務五課", "許家瑜", 7.0, "P4", "P1", 1, 1, 2, 6], [153, "其他電子零組件相關業", "軟體 / 工程類人員", "業務六課", "林均奕", 9.0, "P4", "P1", 1, 0, 0, 9], [384, "家用電器製造業", "業務銷售類人員", "業務五課", "林均奕", 9.0, "P4", "P1", 2, 0, 0, 8], [27, "電腦系統整合服務業", "軟體 / 工程類人員", "業務五課", "許家瑜", 3.0, "P4", "P2", 0, 1, 0, 9], [147, "生化科技研發業", "業務銷售類人員", "業務五課", "—", 3.0, "P4", "P2", 0, 1, 0, 9], [210, "藥品製造業", "業務銷售類人員", "業務六課", "詹季燁", 1.0, "P3", "P3", 0, 0, 2, 8], [51, "建築工程業", "採購 / 資材 / 倉管類人員", "業務五課", "—", 2.0, "P4", "P3", 0, 0, 1, 9], [230, "其他食品製造業", "人力資源類人員", "業務六課", "楊仁豪", 9.0, "P4", "P3", 0, 0, 1, 9], [87, "銀行業", "金融專業相關類人員", "業務六課", "詹季燁", 2.0, "P4", "P4", 0, 0, 0, 10], [252, "綜合商品批發代理業", "品保 / 品管類人員", "業務五課", "—", 3.0, "P4", "P4", 0, 0, 0, 10], [364, "診所", "門市營業類人員", "業務五課", "—", 3.0, "P4", "P4", 0, 0, 0, 10], [202, "機械設備租賃業", "業務銷售類人員|生產管理類人員", "業務六課", "—", 5.0, "P4", "P4", 0, 0, 0, 10], [168, "餐館業", "餐飲類人員", "業務六課", "楊仁豪", 6.0, "P4", "P4", 0, 0, 0, 10], [13, "寵物相關服務業", "軟體 / 工程類人員", "業務六課", "蔡俊男", 7.0, "P4", "P4", 0, 0, 0, 10], [99, "自動控制相關業", "經營 / 幕僚類人員|工程研發類人員|人力資源類人員", "業務六課", "蔡俊男", 7.0, "P4", "P4", 0, 0, 0, 10], [272, "其他商品批發業", "專案 / 產品管理類人員", "業務五課", "洪士雅", 7.0, "P4", "P4", 0, 0, 0, 10], [57, "醫院", "醫療保健服務人員", "業務六課", "楊仁豪", 8.0, "P4", "P4", 0, 0, 0, 10], [89, "醫療器材製造業", "工程研發類人員|業務銷售類人員", "業務五課", "李凱強", 8.0, "P4", "P4", 0, 0, 0, 10], [344, "農事及畜牧服務業", "餐飲類人員", "業務六課", "楊仁豪", 8.0, "P4", "P4", 0, 0, 0, 10], [240, "其他餐飲業", "財務 / 會計 / 稅務類", "業務五課", "林均奕", 9.0, "P4", "P4", 0, 0, 0, 10], [370, "汽車及其零件製造業", "生產管理類人員|品保 / 品管類人員", "業務五課", "洪士雅", 10.0, "P4", "P4", 0, 0, 0, 10]]}, "miss-台中業務部-cases": {"title": "台中業務部｜未命中案件明細（以 Top5 為界）", "columns": ["entrust_id", "產業名稱", "職缺名稱", "課別", "處理人員", "分工產業", "主管決策名次", "主管決策優先級", "當輪最高優先級"], "rows": [[370, "汽車及其零件製造業", "生產管理類人員|品保 / 品管類人員", "業務五課", "洪士雅", "非科", 10.0, "P4", "P4"], [153, "其他電子零組件相關業", "軟體 / 工程類人員", "業務六課", "林均奕", "科技", 9.0, "P4", "P1"], [230, "其他食品製造業", "人力資源類人員", "業務六課", "楊仁豪", "非科", 9.0, "P4", "P3"], [240, "其他餐飲業", "財務 / 會計 / 稅務類", "業務五課", "林均奕", "非科", 9.0, "P4", "P4"], [384, "家用電器製造業", "業務銷售類人員", "業務五課", "林均奕", "非科", 9.0, "P4", "P1"], [57, "醫院", "醫療保健服務人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [89, "醫療器材製造業", "工程研發類人員|業務銷售類人員", "業務五課", "李凱強", "非科", 8.0, "P4", "P4"], [344, "農事及畜牧服務業", "餐飲類人員", "業務六課", "楊仁豪", "非科", 8.0, "P4", "P4"], [13, "寵物相關服務業", "軟體 / 工程類人員", "業務六課", "蔡俊男", "非科", 7.0, "P4", "P4"], [43, "其他食品製造業", "生產管理類人員", "業務五課", "許家瑜", "非科", 7.0, "P4", "P1"], [99, "自動控制相關業", "經營 / 幕僚類人員|工程研發類人員|人力資源類人員", "業務六課", "蔡俊男", "非科", 7.0, "P4", "P4"], [272, "其他商品批發業", "專案 / 產品管理類人員", "業務五課", "洪士雅", "非科", 7.0, "P4", "P4"], [168, "餐館業", "餐飲類人員", "業務六課", "楊仁豪", "非科", 6.0, "P4", "P4"]]}};
+const SUMMARY_ACTIONS = [{"issue": "固定承接池內前位排序不足", "evidence": "Total Top1 21.7%，Top3 49.7%，Top5 66.4%。", "action": "把優化主軸放在 Top1 / Top3，而不是只看 Top5。", "why": "Top5 已顯示模型多半有想到正確人選，但主管真正採用通常發生在更前面的名次。"}, {"issue": "未命中案件高度集中在 P4", "evidence": "Total 未命中案件中，最高可用層級為 P4 的比例為 60.4%，主管最後選 P4 的比例為 93.8%。", "action": "優先補強 P4 內部排序訊號。", "why": "一旦案件主要掉進 P4，排序精度就明顯下降，這是現階段最穩定的失敗樣態。"}, {"issue": "P1 有效，但多位 P1 時 tie-break 不穩", "evidence": "Total 僅 1 位 P1 的案件，Top1 為 40.0%；2 位以上 P1 時，Top1 降到 5.6%。", "action": "補強 P1 層內排序，而不是直接否定 P1 規則。", "why": "問題較像『多位 P1 之間誰該排第一』，不是 P1 這個訊號本身失效。"}, {"issue": "承接偏移不是普遍現象，而是集中於少數案例", "evidence": "可判斷跨科樣本 123 筆中，跨科 13 筆，約 10.6%。", "action": "把偏移案件列為高優先診斷名單。", "why": "偏移不是大面積發生，更可能反映主管在特定案型上用了目前模型還沒結構化的判斷訊號。"}];
+const CONCLUSION_TEXT = "整體 143 筆可對回排名樣本中，Top5 命中率 66.4%，但 Top1 僅 21.7%，顯示目前主要問題不是完全找不到主管最後選的人，而是固定承接池內前位排序仍不夠強。未命中案件又高度集中在最高可用層級 P4，一部與二部的表現也明顯優於台中業務部，表示後續優化應聚焦 P4 區間排序、P1 多候選 tie-break 與少數承接偏移案例，而不是擴大候選池。";
+
+const COLORS = ['#5f7fae','#8ea06a','#c19163','#8176a8','#b1717d','#6d9590','#b39759','#8896ac'];
+
+function pct(v, digits=1){
+  if(v===null || v===undefined || Number.isNaN(v)) return '—';
+  return (v*100).toFixed(digits)+'%';
+}
+function num(v, digits=1){
+  if(v===null || v===undefined || Number.isNaN(v)) return '—';
+  return Number(v).toFixed(digits);
+}
+function signedPct(v, digits=1){
+  if(v===null || v===undefined || Number.isNaN(v)) return '—';
+  const arrow = v >= 0 ? '↑' : '↓';
+  const sign = v >= 0 ? '+' : '';
+  return `${arrow}${sign}${(v*100).toFixed(digits)}%`;
+}
+function esc(s){
+  if(s===null || s===undefined) return '—';
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function buildPie(rows, field, titleMode='pct'){
+  const valid = rows.filter(r => r[field] !== null && r[field] !== undefined && !Number.isNaN(r[field]) && r[field] > 0);
+  if(!valid.length) return `<div class="empty">此族群在這個指標上沒有可解讀的樣本。</div>`;
+  const total = valid.reduce((a,b)=>a + Number(b[field]), 0);
+  let cursor = 0;
+  const labelsOnPie = [];
+  const stops = valid.map((r, i) => {
+    const val = Number(r[field]);
+    const deg = (val/total) * 360;
+    const start = cursor;
+    const end = cursor + deg;
+    const mid = (start + end) / 2;
+    const rad = (mid - 90) * Math.PI / 180;
+    const x = 50 + Math.cos(rad) * 33;
+    const y = 50 + Math.sin(rad) * 33;
+    cursor = end;
+    let labelText = '';
+    if(titleMode === 'count'){
+      labelText = `${val}`;
+    }else if(titleMode === 'share'){
+      labelText = `${((val/total)*100).toFixed(1)}%`;
+    }else{
+      labelText = `${pct(val)}`;
+    }
+    labelsOnPie.push(`<span class="pie-label" style="left:${x}%;top:${y}%;">${labelText}</span>`);
+    return `${COLORS[i % COLORS.length]} ${start}deg ${end}deg`;
+  });
+  const legend = valid.map((r, i) => {
+    const val = Number(r[field]);
+    let txt = '';
+    if(titleMode === 'count'){
+      txt = `${r.process}：${val}`;
+    }else if(titleMode === 'share'){
+      txt = `${r.process}：${((val/total)*100).toFixed(1)}%`;
+    }else{
+      txt = `${r.process}：${pct(val)}`;
+    }
+    return `<div class="legend-item"><span class="swatch" style="background:${COLORS[i % COLORS.length]}"></span><span>${txt}</span></div>`;
+  }).join('');
+  return `<div class="pie-wrap"><div class="pie-shell"><div class="pie" style="background:conic-gradient(${stops.join(',')})"></div>${labelsOnPie.join('')}</div><div class="legend">${legend}</div></div>`;
+}
+function buildBars(rows, metric){
+  const labels = {
+    top1:'Top1 命中率', top3:'Top3 命中率', top5:'Top5 命中率',
+    avg_rank:'平均主管決策名次', avg_pool:'平均推薦池大小',
+    mrr_uplift:'MRR uplift', ndcg_uplift:'NDCG uplift'
+  };
+  const formatter = {
+    top1:(v)=>pct(v), top3:(v)=>pct(v), top5:(v)=>pct(v),
+    avg_rank:(v)=>num(v,2), avg_pool:(v)=>num(v,1),
+    mrr_uplift:(v)=>signedPct(v), ndcg_uplift:(v)=>signedPct(v),
+  };
+  const vals = rows.map(r => r[metric]).filter(v => v !== null && v !== undefined && !Number.isNaN(v)).map(Number);
+  if(!vals.length) return `<div class="empty">此族群在這個指標上沒有可解讀的樣本。</div>`;
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  const hasPositive = max > 0;
+  const hasNegative = min < 0;
+  let zeroTop = 100;
+  if(hasPositive && hasNegative){
+    zeroTop = (max / (max - min)) * 100;
+  }else if(!hasPositive && hasNegative){
+    zeroTop = 0;
+  }
+  const zeroBottom = 100 - zeroTop;
+  const positiveColor = '#708aa5';
+  const negativeColor = '#ad7f86';
+
+  const items = rows.map((r, i) => {
+    const raw = r[metric];
+    if(raw===null || raw===undefined || Number.isNaN(raw)) {
+      return `<div class="col-item"><div class="col-value">—</div><div class="col-track"></div><div class="col-label">${r.process}</div></div>`;
+    }
+    const v = Number(raw);
+    let top = zeroTop;
+    let height = 0;
+    let color = COLORS[i % COLORS.length];
+    let cls = 'positive';
+    if(metric==='mrr_uplift' || metric==='ndcg_uplift'){
+      color = v >= 0 ? positiveColor : negativeColor;
+    }
+    if(v >= 0){
+      const zone = hasNegative ? zeroTop : 100;
+      height = (max === 0) ? 0 : (v / max) * zone;
+      top = zeroTop - height;
+      cls = 'positive';
+    }else{
+      const zone = hasPositive ? (100 - zeroTop) : 100;
+      height = (min === 0) ? 0 : (Math.abs(v / min)) * zone;
+      top = zeroTop;
+      cls = 'negative';
+    }
+    height = Math.max(height, 4);
+    top = Math.min(Math.max(top, 0), 100);
+    return `
+      <div class="col-item">
+        <div class="col-value">${formatter[metric](v)}</div>
+        <div class="col-track">
+          <div class="col-bar ${cls}" style="top:${top}%;height:${height}%;background:${color};"></div>
+        </div>
+        <div class="col-label">${r.process}</div>
+      </div>`;
+  }).join('');
+  return `<div class="chart-caption">${labels[metric]}</div><div class="column-chart" style="--zero-bottom:${zeroBottom}%"><div class="zero-line"></div><div class="column-area">${items}</div></div>`;
+}
+function renderCards(cards){
+  return `<div class="cards">${cards.map(c => `<div class="card"><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div><div class="sub">${esc(c.sub || '')}</div></div>`).join('')}</div>`;
+}
+function openModal(id){
+  const info = DETAIL_TABLES[id];
+  if(!info) return;
+  document.getElementById('modal-title').textContent = info.title;
+  const body = `<div class="table-wrap"><table><thead><tr>${info.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${info.rows.map(row=>`<tr>${row.map(cell=>`<td>${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('active'); }
+
+function renderOverview(group){
+  const data = OVERVIEW[group];
+  const wrap = document.getElementById('overview-content');
+  const processRows = data.process_rows;
+  const caseRows = processRows.map(r=>({process:r.process, cases:r.cases}));
+  const crossRows = processRows.map(r=>({process:r.process, cross_n:r.cross_n, cross_pct:r.cross_pct}));
+  wrap.innerHTML = `
+    ${renderCards(data.cards)}
+    <div class="kpi-row">
+      <div class="kpi-pill"><strong>MRR</strong> ${num(data.kpis.mrr,3)}　|　MRR uplift ${signedPct(data.kpis.mrr_uplift)}</div>
+      <div class="kpi-pill"><strong>NDCG</strong> ${num(data.kpis.ndcg,3)}　|　NDCG uplift ${signedPct(data.kpis.ndcg_uplift)}</div>
+    </div>
+    <div class="grid-2">
+      <div class="chart-box">
+        <div class="chart-head"><h3>總案件數（by process_ug_name）</h3><button class="link-btn" onclick="openModal('overview-${group}-process')">查看明細</button></div>
+        ${buildPie(caseRows,'cases','count')}
+      </div>
+      <div class="chart-box">
+        <div class="chart-head"><h3>跨科比例（by process_ug_name）</h3><button class="link-btn" onclick="openModal('overview-${group}-process')">查看明細</button></div>
+        ${buildPie(crossRows,'cross_n','share')}
+      </div>
+    </div>
+    <div class="chart-box" style="margin-top:16px;">
+      <div class="chart-head"><h3>關鍵指標（by process_ug_name）</h3><button class="link-btn" onclick="openModal('overview-${group}-process')">查看明細</button></div>
+      <div class="metric-toolbar" id="overview-toolbar"></div>
+      <div id="overview-bars"></div>
+    </div>
+    <div class="analysis">
+      <h4>評估分析</h4>
+      <p>${data.summary_text}</p>
+      <p>從這一組數字看，重點不在於是否要繼續擴大候選池，而在於固定承接池內的前位排序是否足夠強。只要 Top5 明顯高於 Top1，通常就代表模型多半已經把主管最後會選的人放進候選清單，但還沒有穩定推到最容易被採用的前段。</p>
+      <p>另一方面，若不同課別的 MRR / NDCG uplift 出現明顯落差，也代表排序難度與規則適配程度並不一致。這類差異值得回到案件型態與主管決策習慣去看，而不應只用單一總體命中率做判讀。</p>
+    </div>`;
+  const metrics = [['top1','Top1'],['top3','Top3'],['top5','Top5'],['avg_rank','平均名次'],['avg_pool','平均池大小'],['mrr_uplift','MRR uplift'],['ndcg_uplift','NDCG uplift']];
+  const toolbar = wrap.querySelector('#overview-toolbar');
+  const bars = wrap.querySelector('#overview-bars');
+  let current = 'top1';
+  function rerender(){
+    bars.innerHTML = buildBars(processRows, current);
+    [...toolbar.querySelectorAll('.metric-btn')].forEach(btn => btn.classList.toggle('active', btn.dataset.metric===current));
+  }
+  toolbar.innerHTML = metrics.map(([key,label])=>`<button class="metric-btn ${key===current?'active':''}" data-metric="${key}">${label}</button>`).join('');
+  toolbar.querySelectorAll('.metric-btn').forEach(btn=>btn.addEventListener('click', ()=>{ current=btn.dataset.metric; rerender(); }));
+  rerender();
+}
+
+
+function renderPStruct(group){
+  const data = PSTRUCT[group];
+  const wrap = document.getElementById('pstruct-content');
+  const tableSwitchMap = PSTRUCT_TABLE_SWITCH[group] || {'全部': data.rows};
+  const processOptions = Object.keys(tableSwitchMap);
+  const defaultProcess = processOptions.includes('全部') ? '全部' : processOptions[0];
+  const buildPstructRows = rows => rows.map(r => `
+    <tr>
+      <td>${r.level}</td><td>${r.cases}</td><td>${r.same_count}</td><td>${pct(r.same_pct)}</td><td>${num(r.same_avg_rank,2)}</td>
+      <td>${pct(r.top1_all)}</td><td>${pct(r.top3_all)}</td><td>${pct(r.top5_all)}</td><td>${pct(r.same_top1)}</td><td>${pct(r.same_top3)}</td>
+      <td>${num(r.mrr,3)}</td><td>${num(r.ndcg,3)}</td><td>${r.common_alt || '—'}</td><td>${pct(r.common_alt_pct)}</td><td>${num(r.common_alt_avg_rank,2)}</td>
+    </tr>`).join('');
+  const sections = data.rows.map(r => `
+    <div class="level-section">
+      <h3>最高可用層級 = ${r.level}</h3>
+      <div class="level-grid">
+        <div class="stat-mini"><div class="k">案件數</div><div class="v">${r.cases}</div></div>
+        <div class="stat-mini"><div class="k">主管選同層級比例</div><div class="v">${pct(r.same_pct)}</div></div>
+        <div class="stat-mini"><div class="k">Top1（全體）</div><div class="v">${pct(r.top1_all)}</div></div>
+        <div class="stat-mini"><div class="k">Top3（全體）</div><div class="v">${pct(r.top3_all)}</div></div>
+      </div>
+      <p>這組數字要分成兩層來看。第一層是主管是否真的採納這個層級；第二層是主管一旦採納後，AI 是否也把那位同層級顧問排在前面。若只看 Top1 / Top3（全體），容易把「主管不採納」與「層內排序失準」混在一起。</p>
+      <p>就 <strong>${r.level}</strong> 而言，主管選同層級比例為 <strong>${pct(r.same_pct)}</strong>；但若主管真的選同層級，Top1 一致率可達 <strong>${pct(r.same_top1)}</strong>，Top3 一致率為 <strong>${pct(r.same_top3)}</strong>。這表示它並非沒有訊號，而是未必足以構成穩定的硬優先規則。</p>
+      <p>若主管沒有選同層級，最常改選的是 <strong>${r.common_alt || '—'}</strong>，占比 <strong>${pct(r.common_alt_pct)}</strong>；這種改選方向比單看命中與否更有診斷價值，因為它更接近主管真實的替代路徑。</p>
+    </div>`).join('');
+  const splitRows = data.p1_split.length ? data.p1_split.map(r=>`<tr><td>${r.bucket}</td><td>${r.cases}</td><td>${pct(r.choose_p1_pct)}</td><td>${pct(r.top1)}</td><td>${pct(r.top3)}</td><td>${num(r.avg_rank,2)}</td></tr>`).join('') : '';
+  const compareRows = data.p1_compare.length ? data.p1_compare.map(r=>`<tr><td>${r.name}</td><td>${num(r.avg_rank,2)}</td><td>${num(r.avg_total_cases,1)}</td><td>${pct(r.avg_overall_rate)}</td><td>${num(r.avg_pr,1)}</td><td>${pct(r.avg_industry_rate)}</td><td>${pct(r.avg_job_rate)}</td></tr>`).join('') : '';
+  const altDist = Object.entries(data.p1_not_adopt_alt_dist || {}).map(([k,v])=>`${k} ${v} 件`).join('、');
+  wrap.innerHTML = `
+    <div class="note"><strong>本頁重點：</strong>先看各最高可用層級的整體排序表現，再看主管是否採納同層級；最後才討論是否需要調整規則。這樣才能把「層級本身有沒有用」與「同層級內排得好不好」分開。</div>
+    <div class="chart-box" style="margin-top:16px;">
+      <div class="chart-head"><h3>P1～P4 結構總表</h3><button class="link-btn" onclick="openModal('pstruct-${group}-cases')">查看案件明細</button></div>
+      <div class="metric-toolbar" id="pstruct-process-toolbar" style="margin-top:12px;"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>最高可用層級</th><th>案件數</th><th>主管選同層級件數</th><th>主管選同層級比例</th><th>同層級平均名次</th><th>Top1（全體）</th><th>Top3（全體）</th><th>Top5（全體）</th><th>同層級採用後 Top1 一致率</th><th>同層級採用後 Top3 一致率</th><th>MRR</th><th>NDCG</th><th>未選同層級時最常改選層級</th><th>該層級占比</th><th>該層級平均名次</th></tr>
+          </thead>
+          <tbody id="pstruct-table-body">${buildPstructRows(tableSwitchMap[defaultProcess])}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="analysis">
+      <h4>總表判讀</h4>
+      <p>若某一層級的「主管選同層級比例」不高，但「同層級採用後 Top1 / Top3 一致率」很高，通常代表該層級本身並非無效，而是主管並不總把它當成絕對優先規則。換句話說，它比較像是強訊號，而不是足以單獨決定結果的硬門檻。</p>
+      <p>這也是為什麼本頁不能只看命中率。因為命中率只會告訴你結果，卻不會告訴你失真到底發生在「主管不採納這個層級」，還是「主管採納了，但 AI 沒把他排在前面」。</p>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div>${sections}</div>
+      <div>
+        <div class="chart-box">
+          <div class="chart-head"><h3>P1 補充分析：僅 1 位 P1 / 2 位以上 P1</h3></div>
+          ${data.p1_split.length ? `<div class="table-wrap"><table><thead><tr><th>P1 情境</th><th>案件數</th><th>主管選 P1 比例</th><th>Top1（全體）</th><th>Top3（全體）</th><th>平均名次</th></tr></thead><tbody>${splitRows}</tbody></table></div>` : `<div class="empty">此族群目前沒有足夠的 P1 案件可拆分。</div>`}
+        </div>
+        <div class="analysis" style="margin-top:16px;">
+          <h4>P1 補充分析 1：多位 P1 的排序穩定性</h4>
+          <p>如果僅 1 位 P1 時表現較穩，但一旦出現 2 位以上 P1，Top1 就明顯下降，通常表示問題不在「P1 有沒有價值」，而在「多位 P1 之間誰應該排第一」的 tie-break 規則仍不夠貼近主管判斷。</p>
+        </div>
+        <div class="chart-box" style="margin-top:16px;">
+          <div class="chart-head"><h3>P1 未採納案件：主管改選顧問 vs AI 最佳 P1</h3></div>
+          ${data.p1_compare.length ? `<div class="table-wrap"><table><thead><tr><th>對象</th><th>平均 AI 名次</th><th>平均總案件數</th><th>平均整體成交率</th><th>平均整體 PR</th><th>平均產業成交率</th><th>平均職類成交率</th></tr></thead><tbody>${compareRows}</tbody></table></div><div class="small" style="margin-top:10px;">主管未採納 P1 的案件數：${data.p1_not_adopt_case_n}；改選層級分布：${altDist || '—'}</div>` : `<div class="empty">此族群目前沒有「最高可用層級 = P1 但主管未採納 P1」的樣本。</div>`}
+        </div>
+        <div class="analysis" style="margin-top:16px;">
+          <h4>P1 補充分析 2：主管為何不選 P1</h4>
+          <p>若主管改選顧問在目前已結構化的指標上，並沒有明顯優於 AI 最佳 P1，通常代表主管還在看模型尚未完整表達的其他訊號，例如更細的案型熟悉度、近期可承接性，或非結構化的信任經驗。</p>
+          <p><strong>可能的優化方向：</strong>在小樣本前提下，較穩妥的方向不是直接推翻 P1～P3，而是把它們逐步降階為可加權的判斷訊號與解釋框架。這樣既能保留可解釋性，也比較符合現階段資料量不大的現實。</p>
+        </div>
+      </div>
+    </div>`;
+
+  const toolbar = wrap.querySelector('#pstruct-process-toolbar');
+  const tbody = wrap.querySelector('#pstruct-table-body');
+  let currentProcess = defaultProcess;
+  function rerenderPstructTable(){
+    tbody.innerHTML = buildPstructRows(tableSwitchMap[currentProcess] || tableSwitchMap[defaultProcess]);
+    [...toolbar.querySelectorAll('.metric-btn')].forEach(btn => btn.classList.toggle('active', btn.dataset.process===currentProcess));
+  }
+  toolbar.innerHTML = processOptions.map(proc => `<button class="metric-btn ${proc===defaultProcess?'active':''}" data-process="${proc}">${proc}</button>`).join('');
+  toolbar.querySelectorAll('.metric-btn').forEach(btn=>btn.addEventListener('click', ()=>{
+    currentProcess = btn.dataset.process;
+    rerenderPstructTable();
+  }));
+  rerenderPstructTable();
+}
+
+function renderMiss(group){
+  const data = MISS[group];
+  const wrap = document.getElementById('miss-content');
+  const missHighRows = data.miss_high.map(r=>({process:r.level, top1:r.pct}));
+  const missChoiceRows = data.miss_choice.map(r=>({process:r.level, top1:r.pct}));
+  wrap.innerHTML = `
+    ${renderCards(data.cards)}
+    <div class="grid-2">
+      <div class="chart-box">
+        <div class="chart-head"><h3>未命中案件｜最高可用層級分布</h3><button class="link-btn" onclick="openModal('miss-${group}-cases')">查看案件明細</button></div>
+        ${buildBars(missHighRows,'top1')}
+      </div>
+      <div class="chart-box">
+        <div class="chart-head"><h3>未命中案件｜主管最後選擇層級分布</h3><button class="link-btn" onclick="openModal('miss-${group}-cases')">查看案件明細</button></div>
+        ${buildBars(missChoiceRows,'top1')}
+      </div>
+    </div>
+    <div class="analysis" style="margin-top:16px;">
+      <h4>評估分析</h4>
+      <p>這裡的命中門檻以 <strong>${data.threshold}</strong> 為界。這種做法的意義，是依各族群的固定池大小與管理需求來看未命中，而不是把所有族群都套用同一個命中門檻，導致判讀失真。</p>
+      <p>若未命中案件的最高可用層級大量集中在 P4，同時主管最後也幾乎都選到 P4，就表示核心問題通常不是承接偏移，而是當案件掉進 P4 之後，模型缺少足夠的內部排序訊號，無法把主管慣用人選穩定推前。</p>
+      <p>${group==='台中業務部' ? '台中業務部未先拆科技／非科承接課，因此這一頁不以跨科作為主要診斷變數。' : `跨科比例方面，未命中案件為 ${pct(data.miss_cross_pct)}，命中案件為 ${pct(data.hit_cross_pct)}。這組差距也可用來判斷，問題主因是否真在跨課承接。`}</p>
+    </div>
+    <div class="chart-box" style="margin-top:16px;">
+      <div class="chart-head"><h3>未命中案件代表樣本</h3><button class="link-btn" onclick="openModal('miss-${group}-cases')">查看完整明細</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>entrust_id</th><th>產業名稱</th><th>職缺名稱</th><th>課別</th><th>處理人員</th><th>分工產業</th><th>主管決策名次</th><th>主管決策優先級</th><th>當輪最高優先級</th></tr></thead>
+          <tbody>${data.examples.map(row=>`<tr>${row.map(cell=>`<td>${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderSummary(){
+  const el = document.getElementById('summary-content');
+  el.innerHTML = `
+    <div class="note"><strong>收斂原則：</strong>先把問題定義清楚，再談動作。若問題其實發生在固定承接池內排序，就不應把優化方向誤導到擴池或召回層。</div>
+    <div class="issue-grid" style="margin-top:16px;">
+      ${SUMMARY_ACTIONS.map(x=>`<div class="issue-card"><span class="tag">Issue & Action</span><h3>${esc(x.issue)}</h3><p><strong>觀察證據：</strong>${esc(x.evidence)}</p><p><strong>建議動作：</strong>${esc(x.action)}</p><p><strong>原因：</strong>${esc(x.why)}</p></div>`).join('')}
+    </div>
+    <div class="analysis" style="margin-top:18px;">
+      <h4>整體結論</h4>
+      <p>${CONCLUSION_TEXT}</p>
+      <p>若要把這份分析進一步推向可用於主管決策甚至直接派案的版本，下一步最值得做的不是再增加更多描述，而是把 P4 內部排序、P1 多候選 tie-break 與承接偏移案例診斷，正式轉成可回測的特徵與規則清單。這樣後續每一輪調整，才有機會從「理解問題」真正走到「持續改善」。</p>
+    </div>`;
+}
+
+function initTabs(){
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const page = btn.dataset.page;
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+    });
+  });
+  document.querySelectorAll('.sub-tabs').forEach(bar=>{
+    const section = bar.dataset.section;
+    bar.querySelectorAll('.subtab').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        bar.querySelectorAll('.subtab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const group = btn.dataset.group;
+        if(section==='overview') renderOverview(group);
+        if(section==='pstruct') renderPStruct(group);
+        if(section==='miss') renderMiss(group);
+      });
+    });
+  });
+}
+initTabs();
+renderOverview('Total');
+renderPStruct('Total');
+renderMiss('Total');
+renderSummary();
+</script>
+
+<script id="oai-editor-script">
+(function(){
+  const STORAGE_KEY = 'hunter_report_editor_values_v1';
+  const panel = document.getElementById('oaiEditorPanel');
+  const handle = document.getElementById('oaiEditorHandle');
+  const toggleDisplayBtn = document.getElementById('oaiToggleDisplayBtn');
+  const saveBtn = document.getElementById('oaiSaveBtn');
+  const resetBtn = document.getElementById('oaiResetBtn');
+  const exportBtn = document.getElementById('oaiExportBtn');
+  const importBtn = document.getElementById('oaiImportBtn');
+  const importInput = document.getElementById('oaiImportInput');
+  const statusEl = document.getElementById('oaiEditorStatus');
+  const fieldsRoot = document.getElementById('oaiEditorFields');
+
+  let values = {};
+  let defaults = {};
+  let targets = [];
+  let selectedKey = null;
+
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){ values = JSON.parse(saved) || {}; }
+  }catch(err){ values = {}; }
+
+  function setCollapsed(collapsed){
+    panel.classList.toggle('is-collapsed', collapsed);
+    document.body.classList.toggle('editor-open', !collapsed);
+    document.body.classList.toggle('editor-collapsed', collapsed);
+    handle.textContent = collapsed ? '‹' : '›';
+  }
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function activePageMeta(){
+    const active = document.querySelector('.page.active');
+    if(!active){ return { pageId:'', pageTitle:'目前頁面' }; }
+    const tab = document.querySelector('.top-tabs .tab.active');
+    return {
+      pageId: active.id,
+      pageTitle: tab ? tab.textContent.trim() : (active.id || '目前頁面')
+    };
+  }
+
+  function currentGroupForSection(pageId){
+    if(pageId === 'overview'){
+      const btn = document.querySelector('.sub-tabs[data-section="overview"] .subtab.active');
+      return btn ? btn.dataset.group : '';
+    }
+    if(pageId === 'pstruct'){
+      const btn = document.querySelector('.sub-tabs[data-section="pstruct"] .subtab.active');
+      return btn ? btn.dataset.group : '';
+    }
+    if(pageId === 'miss'){
+      const btn = document.querySelector('.sub-tabs[data-section="miss"] .subtab.active');
+      return btn ? btn.dataset.group : '';
+    }
+    return '';
+  }
+
+  function makeKey(pageId, group, type, idx){
+    return [pageId || 'global', group || 'static', type, idx].join('||');
+  }
+
+  function applyValue(item){
+    const val = Object.prototype.hasOwnProperty.call(values, item.key) ? values[item.key] : defaults[item.key];
+    if(item.el.textContent !== val){
+      item.el.textContent = val;
+    }
+  }
+
+  function addTarget(list, groupName, label, el, key){
+    if(!el) return;
+    const text = (el.textContent || '').trim();
+    if(!text) return;
+    if(!Object.prototype.hasOwnProperty.call(defaults, key)){ defaults[key] = text; }
+    list.push({ group: groupName, label, el, key, multiline: text.length > 42 || /[。；，：]/.test(text) });
+  }
+
+  function scanTargets(){
+    targets = [];
+    document.querySelectorAll('.oai-editable-target').forEach(el=>{
+      el.classList.remove('oai-editable-target','oai-selected-target');
+      delete el.dataset.editorKey;
+    });
+
+    addTarget(targets, '全域內容', '主標題', document.querySelector('.hero h1'), makeKey('global','static','hero-title',0));
+    addTarget(targets, '全域內容', '初步結論', document.querySelector('.hero p'), makeKey('global','static','hero-conclusion',0));
+
+    const meta = activePageMeta();
+    const active = document.querySelector('.page.active');
+    if(!active){ return; }
+    const group = currentGroupForSection(meta.pageId);
+
+    addTarget(targets, meta.pageTitle, '頁面標題', active.querySelector('.page-title'), makeKey(meta.pageId, group, 'page-title', 0));
+    addTarget(targets, meta.pageTitle, '頁面說明', active.querySelector('.page-desc'), makeKey(meta.pageId, group, 'page-desc', 0));
+
+    active.querySelectorAll('.note').forEach((el, idx)=>{
+      addTarget(targets, meta.pageTitle, `重點提示 ${idx+1}`, el, makeKey(meta.pageId, group, 'note', idx));
+    });
+
+    active.querySelectorAll('.chart-head h3').forEach((el, idx)=>{
+      addTarget(targets, meta.pageTitle, `圖表標題 ${idx+1}`, el, makeKey(meta.pageId, group, 'chart-title', idx));
+    });
+
+    active.querySelectorAll('.analysis').forEach((box, idx)=>{
+      const h4 = box.querySelector('h4');
+      if(h4) addTarget(targets, meta.pageTitle, `分析小標 ${idx+1}`, h4, makeKey(meta.pageId, group, 'analysis-title', idx));
+      box.querySelectorAll('p').forEach((p, pidx)=>{
+        addTarget(targets, meta.pageTitle, `分析段落 ${idx+1}-${pidx+1}`, p, makeKey(meta.pageId, group, `analysis-p-${idx}`, pidx));
+      });
+    });
+
+    active.querySelectorAll('.level-section').forEach((box, idx)=>{
+      const h3 = box.querySelector('h3');
+      if(h3) addTarget(targets, meta.pageTitle, `層級說明標題 ${idx+1}`, h3, makeKey(meta.pageId, group, 'level-title', idx));
+      box.querySelectorAll('p').forEach((p, pidx)=>{
+        addTarget(targets, meta.pageTitle, `層級說明 ${idx+1}-${pidx+1}`, p, makeKey(meta.pageId, group, `level-p-${idx}`, pidx));
+      });
+    });
+
+    active.querySelectorAll('.issue-card').forEach((box, idx)=>{
+      const h3 = box.querySelector('h3');
+      if(h3) addTarget(targets, meta.pageTitle, `Issue 標題 ${idx+1}`, h3, makeKey(meta.pageId, group, 'issue-title', idx));
+      box.querySelectorAll('p').forEach((p, pidx)=>{
+        addTarget(targets, meta.pageTitle, `Issue 內容 ${idx+1}-${pidx+1}`, p, makeKey(meta.pageId, group, `issue-p-${idx}`, pidx));
+      });
+    });
+
+    targets.forEach(item=>{
+      item.el.classList.add('oai-editable-target');
+      item.el.dataset.editorKey = item.key;
+      applyValue(item);
+      item.el.addEventListener('click', onTargetClick);
+    });
+  }
+
+  function onTargetClick(e){
+    if(document.body.classList.contains('editor-collapsed')) return;
+    const key = e.currentTarget && e.currentTarget.dataset ? e.currentTarget.dataset.editorKey : '';
+    if(key){ selectKey(key, true); }
+  }
+
+  function groupedTargets(){
+    const groups = {};
+    targets.forEach(item=>{
+      if(!groups[item.group]) groups[item.group] = [];
+      groups[item.group].push(item);
+    });
+    return groups;
+  }
+
+  function renderFields(){
+    const groups = groupedTargets();
+    const html = Object.keys(groups).map(groupName=>{
+      const fields = groups[groupName].map(item=>{
+        const val = Object.prototype.hasOwnProperty.call(values, item.key) ? values[item.key] : defaults[item.key];
+        const cls = item.key === selectedKey ? 'oai-editor-field is-selected' : 'oai-editor-field';
+        const control = item.multiline
+          ? `<textarea class="oai-editor-textarea" data-key="${escapeHtml(item.key)}">${escapeHtml(val)}</textarea>`
+          : `<input class="oai-editor-input" data-key="${escapeHtml(item.key)}" value="${escapeHtml(val)}" />`;
+        return `<div class="${cls}" data-field-key="${escapeHtml(item.key)}"><label class="oai-editor-label">${escapeHtml(item.label)}</label>${control}</div>`;
+      }).join('');
+      return `<div class="oai-editor-group"><div class="oai-editor-group-title">${escapeHtml(groupName)}</div>${fields}</div>`;
+    }).join('');
+    fieldsRoot.innerHTML = html || '<div class="oai-editor-group"><div class="oai-editor-group-title">目前頁面</div><div class="oai-editor-note">此頁暫無可編輯文字。</div></div>';
+
+    fieldsRoot.querySelectorAll('.oai-editor-input,.oai-editor-textarea').forEach(control=>{
+      control.addEventListener('focus', ()=> selectKey(control.dataset.key, false));
+      control.addEventListener('input', ()=>{
+        values[control.dataset.key] = control.value;
+        const item = targets.find(t=>t.key === control.dataset.key);
+        if(item){ item.el.textContent = control.value; }
+      });
+    });
+  }
+
+  function selectKey(key, scrollField){
+    selectedKey = key;
+    targets.forEach(item=> item.el.classList.toggle('oai-selected-target', item.key === selectedKey));
+    fieldsRoot.querySelectorAll('.oai-editor-field').forEach(field=>{
+      field.classList.toggle('is-selected', field.dataset.fieldKey === selectedKey);
+    });
+    const item = targets.find(t=>t.key === key);
+    if(item && statusEl){
+      statusEl.textContent = `目前目標：${item.group}｜${item.label}`;
+    }
+    if(scrollField){
+      const field = fieldsRoot.querySelector(`[data-field-key="${CSS.escape(key)}"]`);
+      if(field){
+        field.scrollIntoView({block:'nearest'});
+        const control = field.querySelector('.oai-editor-input,.oai-editor-textarea');
+        if(control) control.focus({preventScroll:true});
+      }
+    }
+  }
+
+  function refreshEditor(){
+    scanTargets();
+    renderFields();
+    if(selectedKey && !targets.some(t=>t.key === selectedKey)){ selectedKey = null; }
+    if(!selectedKey && targets[0]) selectedKey = targets[0].key;
+    if(selectedKey) selectKey(selectedKey, false);
+  }
+
+  function saveToLocal(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    if(statusEl) statusEl.textContent = '已儲存到目前瀏覽器。';
+  }
+
+  function resetAll(){
+    values = {};
+    localStorage.removeItem(STORAGE_KEY);
+    refreshEditor();
+    if(statusEl) statusEl.textContent = '已還原為預設文字。';
+  }
+
+  function exportJson(){
+    const blob = new Blob([JSON.stringify({ values }, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hunter_report_editor_content.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importJson(file){
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const data = JSON.parse(reader.result);
+        values = (data && data.values) ? data.values : {};
+        refreshEditor();
+        if(statusEl) statusEl.textContent = '已匯入 JSON 文案。';
+      }catch(err){
+        alert('JSON 內容格式錯誤，無法匯入。');
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  setCollapsed(false);
+  handle.addEventListener('click', ()=> setCollapsed(!panel.classList.contains('is-collapsed')));
+  toggleDisplayBtn.addEventListener('click', ()=> setCollapsed(!panel.classList.contains('is-collapsed')));
+  saveBtn.addEventListener('click', saveToLocal);
+  resetBtn.addEventListener('click', resetAll);
+  exportBtn.addEventListener('click', exportJson);
+  importBtn.addEventListener('click', ()=> importInput.click());
+  importInput.addEventListener('change', ()=> {
+    const file = importInput.files && importInput.files[0];
+    if(file) importJson(file);
+    importInput.value = '';
+  });
+
+  ['click','keyup'].forEach(evt=>{
+    document.querySelectorAll('.top-tabs .tab, .sub-tabs .subtab').forEach(btn=>{
+      btn.addEventListener(evt, ()=> setTimeout(refreshEditor, 30));
+    });
+  });
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest ? e.target.closest('.metric-btn') : null;
+    if(btn){ setTimeout(refreshEditor, 30); }
+  });
+
+  // wrap existing renderers so dynamic HTML refreshes editor
+  if(typeof window.renderOverview === 'function'){
+    const old = window.renderOverview;
+    window.renderOverview = function(group){
+      const r = old.apply(this, arguments);
+      setTimeout(refreshEditor, 0);
+      return r;
+    };
+  }
+  if(typeof window.renderPStruct === 'function'){
+    const old = window.renderPStruct;
+    window.renderPStruct = function(group){
+      const r = old.apply(this, arguments);
+      setTimeout(refreshEditor, 0);
+      return r;
+    };
+  }
+  if(typeof window.renderMiss === 'function'){
+    const old = window.renderMiss;
+    window.renderMiss = function(group){
+      const r = old.apply(this, arguments);
+      setTimeout(refreshEditor, 0);
+      return r;
+    };
+  }
+  if(typeof window.renderSummary === 'function'){
+    const old = window.renderSummary;
+    window.renderSummary = function(){
+      const r = old.apply(this, arguments);
+      setTimeout(refreshEditor, 0);
+      return r;
+    };
+  }
+
+  refreshEditor();
+})();
+</script>
+
+</body>
+</html>
