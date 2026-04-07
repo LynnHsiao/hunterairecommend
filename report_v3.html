@@ -639,7 +639,7 @@ renderSummary();
 
 <script id="oai-editor-script">
 (function(){
-  const STORAGE_KEY = 'hunter_report_editor_values_v1';
+  const STORAGE_KEY = 'hunter_report_editor_values_v2_embedded_20260407';
   const panel = document.getElementById('oaiEditorPanel');
   const handle = document.getElementById('oaiEditorHandle');
   const toggleDisplayBtn = document.getElementById('oaiToggleDisplayBtn');
@@ -651,15 +651,39 @@ renderSummary();
   const statusEl = document.getElementById('oaiEditorStatus');
   const fieldsRoot = document.getElementById('oaiEditorFields');
 
-  let values = {};
+  const EMBEDDED_VALUES = {
+  "overview||Total||analysis-p-0||0": "Top3：『業務二課』遠低於其他三課，需確認差異原因。",
+  "overview||Total||analysis-p-0||1": "MRR 增值 (對應該推薦池大小的基準值)：看每一次主管的決策是否能集中命中在AI推薦前1、2名  (模型 A\n排名分布：1, 1, 1, 13 |\n\n模型 B\n排名分布：4, 4, 4, 4)",
+  "overview||Total||analysis-p-0||2": "NDCG 增值 (對應該推薦池大小的基準值)：看每一次主管的決策看AI推薦排序決策是否接近 (模型 C\n2, 3, 4, 7 |\n模型 D\n1, 6, 6, 3)",
+  "overview||業務一部＋業務二部||analysis-p-0||0": "Top3：『業務二課』遠低於其他三課，需確認差異原因。",
+  "overview||業務一部＋業務二部||analysis-p-0||1": "MRR 增值 (對應該推薦池大小的基準值)：看每一次主管的決策是否能集中命中在AI推薦前1、2名 (模型 A 排名分布：1, 1, 1, 13 | 模型 B 排名分布：4, 4, 4, 4)",
+  "overview||業務一部＋業務二部||analysis-p-0||2": "NDCG 增值 (對應該推薦池大小的基準值)：看每一次主管的決策看AI推薦排序決策是否接近 (模型 C 2, 3, 4, 7 | 模型 D 1, 6, 6, 3)",
+  "overview||台中業務部||analysis-p-0||0": "Top5：『業務六課』偏低，需確認差異原因。",
+  "overview||台中業務部||analysis-p-0||1": "",
+  "overview||台中業務部||analysis-p-0||2": "MRR / NDCG uplift在六課的表現上也偏弱。",
+  "pstruct||Total||note||0": "本頁重點：先看主管是否有選擇該輪最高的推薦層級，若有，再看排序品質。確認兩方面：「層級本身有沒有用」與「同層級內排得好不好」。",
+  "pstruct||業務一部＋業務二部||note||0": "本頁重點：先看主管是否有選擇該輪最高的推薦層級，若有，再看排序品質。確認兩方面：「層級本身有沒有用」與「同層級內排得好不好」。",
+  "pstruct||台中業務部||note||0": "本頁重點：先看主管是否有選擇該輪最高的推薦層級，若有，再看排序品質。確認兩方面：「層級本身有沒有用」與「同層級內排得好不好」。",
+  "pstruct||業務一部＋業務二部||analysis-p-0||0": "就 P1 而言，主管選同層級比例為 40%；但若主管真的選同層級，Top1 一致率可達 64.3%，Top3 一致率為 85.7%。這表示它並非沒有訊號，而是未必足以構成穩定的硬優先規則。",
+  "pstruct||業務一部＋業務二部||analysis-p-1||0": "如果僅 1 位 P1 時表現較穩，但一旦出現 2 位以上 P1，Top1 就明顯下降，通常表示問題不在「P1 有沒有價值」，而在「多位 P1 之間誰應該排第一」的 tie-break 規則仍不夠貼近主管判斷。",
+  "pstruct||業務一部＋業務二部||analysis-p-0||1": "總體看P1~P3，採納比例與同層級排序一致率顯示，它具備一定解釋力，但未必穩定強於 其他層級。若後續要調整規則，不宜先假設 P2 一定高於 P3，而應把它視為一種可加權訊號來驗證其實際貢獻。",
+  "summary||static||issue-p-2||1": "目前資料顯示，P1～P3 具備解釋力，但不足以支撐剛性的硬優先排序。若後續要逐步優化模型，比較合理的方向，不是立刻拿掉 P1～P3，而是把它們逐步降階為可加權的判斷訊號與解釋框架。\n\n",
+  "summary||static||issue-title||2": "P1~P3有初步解釋力，但不足以支撐剛性硬排序",
+  "summary||static||issue-p-2||0": "",
+  "summary||static||issue-p-2||2": "預計下一步嘗試：Baseline Score = Σ（特徵 × 權重）。把『組合經驗、產業經驗、職類經驗、主管排序、整體表現、負載等訊號』一起納入分數，取代目前過於剛性的先分層、再排序。\n"
+};
+  let values = JSON.parse(JSON.stringify(EMBEDDED_VALUES));
   let defaults = {};
   let targets = [];
   let selectedKey = null;
 
   try{
     const saved = localStorage.getItem(STORAGE_KEY);
-    if(saved){ values = JSON.parse(saved) || {}; }
-  }catch(err){ values = {}; }
+    if(saved){
+      const parsed = JSON.parse(saved) || {};
+      values = Object.assign({}, EMBEDDED_VALUES, parsed);
+    }
+  }catch(err){ values = JSON.parse(JSON.stringify(EMBEDDED_VALUES)); }
 
   function setCollapsed(collapsed){
     panel.classList.toggle('is-collapsed', collapsed);
@@ -713,10 +737,22 @@ renderSummary();
 
   function addTarget(list, groupName, label, el, key){
     if(!el) return;
-    const text = (el.textContent || '').trim();
-    if(!text) return;
-    if(!Object.prototype.hasOwnProperty.call(defaults, key)){ defaults[key] = text; }
-    list.push({ group: groupName, label, el, key, multiline: text.length > 42 || /[。；，：]/.test(text) });
+    const rawText = (el.textContent || '').trim();
+    const hasEmbedded = Object.prototype.hasOwnProperty.call(EMBEDDED_VALUES, key);
+    const hasCurrent = Object.prototype.hasOwnProperty.call(values, key);
+    if(!rawText && !hasEmbedded && !hasCurrent) return;
+
+    const baseline = hasEmbedded ? String(EMBEDDED_VALUES[key] == null ? '' : EMBEDDED_VALUES[key]) : rawText;
+    if(!Object.prototype.hasOwnProperty.call(defaults, key)){ defaults[key] = baseline; }
+
+    const preview = hasCurrent ? String(values[key] == null ? '' : values[key]) : baseline;
+    list.push({
+      group: groupName,
+      label,
+      el,
+      key,
+      multiline: preview.length > 42 || /[。；，：\n]/.test(preview)
+    });
   }
 
   function scanTargets(){
@@ -851,10 +887,10 @@ renderSummary();
   }
 
   function resetAll(){
-    values = {};
+    values = JSON.parse(JSON.stringify(EMBEDDED_VALUES));
     localStorage.removeItem(STORAGE_KEY);
     refreshEditor();
-    if(statusEl) statusEl.textContent = '已還原為預設文字。';
+    if(statusEl) statusEl.textContent = '已還原為目前 HTML 內建文字。';
   }
 
   function exportJson(){
